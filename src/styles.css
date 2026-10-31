@@ -5,20 +5,16 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Design system definition.
- *
- * The @theme inline block maps CSS custom properties to Tailwind utility
- * classes (e.g. --color-primary -> bg-primary, text-primary).
- *
- * The :root and .dark blocks define the actual color values using oklch.
- * All colors MUST use oklch format.
- *
- * To add a new semantic color:
- * 1. Add the variable to :root (light value) and .dark (dark value)
- * 2. Register it in @theme inline as --color-<name>: var(--<name>)
+ * Mocklab design system — authoritative academic SaaS.
+ * Deep indigo ink, slate structure, crisp paper sheets.
+ * All colors use oklch.
  */
 
 @theme inline {
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Source Serif 4", "Times New Roman", ui-serif, Georgia, serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -34,6 +30,7 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-glow: var(--primary-glow);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -46,6 +43,29 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-ring-offset-background: var(--background);
+
+  --color-nav: var(--nav);
+  --color-nav-foreground: var(--nav-foreground);
+  --color-nav-muted: var(--nav-muted);
+  --color-nav-border: var(--nav-border);
+
+  --color-paper: var(--paper);
+  --color-paper-foreground: var(--paper-foreground);
+  --color-paper-muted: var(--paper-muted);
+  --color-paper-rule: var(--paper-rule);
+  --color-paper-line: var(--paper-line);
+
+  --color-verified: var(--verified);
+  --color-verified-foreground: var(--verified-foreground);
+  --color-verified-soft: var(--verified-soft);
+
+  --color-mark-method: var(--mark-method);
+  --color-mark-method-soft: var(--mark-method-soft);
+  --color-mark-accuracy: var(--mark-accuracy);
+  --color-mark-accuracy-soft: var(--mark-accuracy-soft);
+  --color-mark-independent: var(--mark-independent);
+  --color-mark-independent-soft: var(--mark-independent-soft);
+
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -59,29 +79,62 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  --shadow-sheet: var(--sheet-shadow);
+  --shadow-elevated: var(--elevated-shadow);
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
+  --radius: 0.5rem;
+  --background: oklch(0.965 0.006 270);
+  --foreground: oklch(0.21 0.04 268);
+  --card: oklch(0.995 0.002 270);
+  --card-foreground: oklch(0.21 0.04 268);
+  --popover: oklch(0.995 0.002 270);
+  --popover-foreground: oklch(0.21 0.04 268);
+  /* deep indigo #1e1b4b */
+  --primary: oklch(0.32 0.12 278);
+  --primary-foreground: oklch(0.98 0.01 278);
+  --primary-glow: oklch(0.46 0.17 276);
+  --secondary: oklch(0.93 0.015 275);
+  --secondary-foreground: oklch(0.26 0.09 278);
+  --muted: oklch(0.945 0.008 270);
+  --muted-foreground: oklch(0.5 0.03 268);
+  --accent: oklch(0.92 0.03 278);
+  --accent-foreground: oklch(0.26 0.1 278);
+  --destructive: oklch(0.56 0.21 25);
+  --destructive-foreground: oklch(0.98 0.01 25);
+  --border: oklch(0.88 0.012 270);
+  --input: oklch(0.86 0.014 270);
+  --ring: oklch(0.46 0.17 276);
+
+  /* Top navigation — slate #0f172a */
+  --nav: oklch(0.208 0.042 265.8);
+  --nav-foreground: oklch(0.97 0.006 265);
+  --nav-muted: oklch(0.72 0.03 265);
+  --nav-border: oklch(0.32 0.04 265);
+
+  /* Exam sheet */
+  --paper: oklch(1 0 0);
+  --paper-foreground: oklch(0.16 0.01 265);
+  --paper-muted: oklch(0.45 0.015 265);
+  --paper-rule: oklch(0.2 0.02 265);
+  --paper-line: oklch(0.7 0.015 265);
+
+  --verified: oklch(0.52 0.13 160);
+  --verified-foreground: oklch(0.99 0.01 160);
+  --verified-soft: oklch(0.955 0.04 160);
+
+  --mark-method: oklch(0.48 0.17 255);
+  --mark-method-soft: oklch(0.94 0.04 255);
+  --mark-accuracy: oklch(0.48 0.12 160);
+  --mark-accuracy-soft: oklch(0.94 0.05 160);
+  --mark-independent: oklch(0.47 0.18 305);
+  --mark-independent-soft: oklch(0.94 0.04 305);
+
+  --sheet-shadow: 0 1px 2px oklch(0.2 0.04 268 / 0.08), 0 12px 32px -12px oklch(0.2 0.06 270 / 0.25);
+  --elevated-shadow: 0 10px 30px -12px oklch(0.32 0.12 278 / 0.45);
+
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -97,41 +150,6 @@
   --sidebar-ring: oklch(0.704 0.04 256.788);
 }
 
-.dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
-}
-
 @layer base {
   * {
     border-color: var(--color-border);
@@ -140,5 +158,84 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@utility exam-sheet {
+  background-color: var(--paper);
+  color: var(--paper-foreground);
+  box-shadow: var(--sheet-shadow);
+  border-radius: 2px;
+}
+
+@utility working-line {
+  height: 1.75rem;
+  border-bottom: 1px dotted var(--paper-line);
+}
+
+@utility bg-gradient-primary {
+  background-image: linear-gradient(135deg, var(--primary), var(--primary-glow));
+}
+
+/* Keep KaTeX inheriting the paper ink */
+.katex {
+  font-size: 1.05em;
+}
+.katex-display {
+  margin: 0.4em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* ============ A4 print & photocopy stylesheet ============ */
+.print-page-break {
+  page-break-before: always;
+  break-before: page;
+}
+
+@media screen {
+  .print-page-break {
+    margin-top: 2rem;
+  }
+}
+
+@page {
+  size: A4;
+  margin: 14mm;
+}
+
+@media print {
+  .no-print,
+  [data-sonner-toaster] {
+    display: none !important;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+  }
+
+  .print-full {
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    height: auto !important;
+    display: block !important;
+  }
+
+  .exam-sheet {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+  }
+
+  .print-avoid-break {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 }
