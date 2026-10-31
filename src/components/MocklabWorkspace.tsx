@@ -72,7 +72,7 @@ function telemetryLabel(t: Telemetry): string {
 }
 
 export function MocklabWorkspace() {
-  const initial = PRESETS[0];
+  const initial = PRESETS[0]!;
   const [examBoard, setExamBoard] = useState<ExamBoard>(initial.examBoard);
   const [syllabus, setSyllabus] = useState(initial.syllabusCode);
   const [presetId, setPresetId] = useState(initial.id);
@@ -94,7 +94,7 @@ export function MocklabWorkspace() {
 
   useEffect(() => setArmed(countArmedProviders()), []);
 
-  const syllabusOption = SYLLABUS_OPTIONS.find((s) => s.value === syllabus) ?? SYLLABUS_OPTIONS[0];
+  const syllabusOption = SYLLABUS_OPTIONS.find((s) => s.value === syllabus) ?? SYLLABUS_OPTIONS[0]!;
 
   const changeBoard = (board: ExamBoard) => {
     setExamBoard(board);

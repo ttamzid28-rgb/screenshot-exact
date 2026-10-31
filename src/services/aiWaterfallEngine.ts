@@ -28,7 +28,7 @@ export const PROVIDERS: ProviderConfig[] = [
     endpoint: "https://api.groq.com/openai/v1/chat/completions",
     model: "llama-3.3-70b-versatile",
     storageKey: "mb_groq_key",
-    envKey: (import.meta.env.VITE_GROQ_API_KEY as string | undefined) ?? "",
+    envKey: (import.meta.env["VITE_GROQ_API_KEY"] as string | undefined) ?? "",
   },
   {
     name: "Cerebras WSE",
@@ -36,7 +36,7 @@ export const PROVIDERS: ProviderConfig[] = [
     endpoint: "https://api.cerebras.ai/v1/chat/completions",
     model: "llama-3.3-70b",
     storageKey: "mb_cerebras_key",
-    envKey: (import.meta.env.VITE_CEREBRAS_API_KEY as string | undefined) ?? "",
+    envKey: (import.meta.env["VITE_CEREBRAS_API_KEY"] as string | undefined) ?? "",
   },
   {
     name: "SambaNova RDU",
@@ -44,7 +44,7 @@ export const PROVIDERS: ProviderConfig[] = [
     endpoint: "https://api.sambanova.ai/v1/chat/completions",
     model: "Meta-Llama-3.3-70B-Instruct",
     storageKey: "mb_sambanova_key",
-    envKey: (import.meta.env.VITE_SAMBANOVA_API_KEY as string | undefined) ?? "",
+    envKey: (import.meta.env["VITE_SAMBANOVA_API_KEY"] as string | undefined) ?? "",
   },
 ];
 
@@ -93,7 +93,7 @@ verificationSummary must briefly state how you verified the answers are clean (e
 Escape every backslash in JSON strings (write \\\\frac, not \\frac).`;
 
 export interface GenerateOptions {
-  preset?: PastPaperPreset;
+  preset?: PastPaperPreset | undefined;
   sourceText: string;
   examBoard: ExamBoard;
   syllabusCode: string;
@@ -219,11 +219,14 @@ export function adaptCustomQuestion(o: GenerateOptions): GeneratedExamPaper {
     const m = partRe.exec(line);
     if (!m) {
       if (parts.length === 0) stem.push(line);
-      else parts[parts.length - 1].questionText += " " + line;
+      else {
+        const prev = parts[parts.length - 1];
+        if (prev) prev.questionText += " " + line;
+      }
       continue;
     }
-    let label = m[1];
-    let body = m[2];
+    let label = m[1] ?? "";
+    let body = m[2] ?? "";
     const letter = /^\(([a-z])\)/i.exec(label)?.[1];
     if (letter) lastLetter = letter;
     else if (lastLetter && /^\([ivx]+\)$/i.test(label)) label = `(${lastLetter})${label}`;
