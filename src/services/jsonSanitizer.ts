@@ -87,10 +87,6 @@ export function sanitizeLatexJson(raw: string): string {
 }
 
 export function parseModelJson<T>(raw: string): T {
-  const cleaned = stripCodeFences(raw);
-  try {
-    return JSON.parse(cleaned) as T;
-  } catch {
-    return JSON.parse(sanitizeLatexJson(raw)) as T;
-  }
+  // Always sanitize first: "\frac" is technically valid JSON (\f + "rac") but silently corrupts.
+  return JSON.parse(sanitizeLatexJson(raw)) as T;
 }
