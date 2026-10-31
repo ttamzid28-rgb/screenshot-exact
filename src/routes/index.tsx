@@ -1,24 +1,28 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
+import { MocklabWorkspace } from "@/components/MocklabWorkspace";
+
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "Mocklab — Unseen Pre-Boards & Mark Schemes for CAIE & Edexcel" },
+      {
+        name: "description",
+        content:
+          "Generate unseen, mathematically verified mock exam papers and official M1/A1/B1 examiner mark schemes from O-Level and A-Level past paper questions.",
+      },
+      { property: "og:title", content: "Mocklab — Unseen Pre-Boards & Examiner Mark Schemes" },
+      {
+        property: "og:description",
+        content: "Isomorphic CAIE & Edexcel mock papers with verified examiner mark schemes, ready to print.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
-  return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
-  );
+  return <MocklabWorkspace />;
 }
