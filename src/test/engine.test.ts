@@ -38,7 +38,7 @@ describe("Verified presets", () => {
   }
 
   it("Roll Set B returns the Set B variant offline", () => {
-    const p = PRESETS[0];
+    const p = PRESETS[0]!;
     const paper = localFallback({
       sourceText: p.sourceQuestionText,
       examBoard: p.examBoard,

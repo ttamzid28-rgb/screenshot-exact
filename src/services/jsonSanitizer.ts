@@ -29,7 +29,7 @@ function latexWordAt(source: string, start: number): string | null {
 export function stripCodeFences(raw: string): string {
   let text = raw.trim();
   const fenced = /```(?:json)?\s*([\s\S]*?)```/i.exec(text);
-  if (fenced) text = fenced[1].trim();
+  if (fenced?.[1]) text = fenced[1].trim();
   const first = text.indexOf("{");
   const last = text.lastIndexOf("}");
   if (first !== -1 && last > first) text = text.slice(first, last + 1);
