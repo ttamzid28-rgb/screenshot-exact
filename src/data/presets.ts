@@ -46,9 +46,7 @@ export const SYLLABUS_OPTIONS: SyllabusOption[] = [
   },
 ];
 
-/* ------------------------------------------------------------------ */
-/* Preset 1 — Quadratics & Tangents                                   */
-/* ------------------------------------------------------------------ */
+/* ---------------- Preset 1 — Quadratics & Tangents ---------------- */
 const quadratics: PastPaperPreset = {
   id: "caie-9709-quadratics",
   label: "CAIE 9709/12 Pure Math 1 — Quadratics & Tangents",
@@ -163,9 +161,7 @@ const quadratics: PastPaperPreset = {
   },
 };
 
-/* ------------------------------------------------------------------ */
-/* Preset 2 — Calculus & Volume of Revolution                         */
-/* ------------------------------------------------------------------ */
+/* ---------------- Preset 2 — Calculus & Volume of Revolution ---------------- */
 const calculus: PastPaperPreset = {
   id: "caie-9709-calculus",
   label: "CAIE 9709/12 Pure Math 1 — Calculus & Volume of Revolution",
@@ -279,9 +275,7 @@ const calculus: PastPaperPreset = {
   },
 };
 
-/* ------------------------------------------------------------------ */
-/* Preset 3 — O-Level Physics Kinematics & Dynamics                   */
-/* ------------------------------------------------------------------ */
+/* ---------------- Preset 3 — O-Level Physics Kinematics & Dynamics ---------------- */
 const physics: PastPaperPreset = {
   id: "caie-5054-kinematics",
   label: "CAIE 5054/22 O-Level Physics — Kinematics & Dynamics",
@@ -437,9 +431,7 @@ const physics: PastPaperPreset = {
   },
 };
 
-/* ------------------------------------------------------------------ */
-/* Preset 4 — Edexcel Coordinate Geometry & Circles                   */
-/* ------------------------------------------------------------------ */
+/* ---------------- Preset 4 — Edexcel Coordinate Geometry & Circles ---------------- */
 const circles: PastPaperPreset = {
   id: "edexcel-wma11-circles",
   label: "Edexcel WMA11/01 Pure Math 1 — Coordinate Geometry & Circles",
@@ -549,7 +541,222 @@ const circles: PastPaperPreset = {
   },
 };
 
-export const PRESETS: PastPaperPreset[] = [quadratics, calculus, physics, circles];
+/* ---------------- Preset 5 — CAIE 4024 O-Level Math ---------------- */
+const oLevelMath: PastPaperPreset = {
+  id: "caie-4024-algebra",
+  label: "CAIE 4024/12 O-Level Math — Algebraic Fractions & Quadratics",
+  examBoard: "CAIE (Cambridge)",
+  syllabusCode: "4024/12",
+  paperTitle: "Mathematics (Syllabus D) — Paper 1",
+  topic: "Algebraic Fractions & Quadratic Equations",
+  sourceQuestionText:
+    "Solve the equation $\\frac{3}{x - 2} + \\frac{2}{x + 1} = 2$. Show all your working and give your answers correct to 2 decimal places. [5]",
+  fallbackSetA: {
+    paperHeader: {
+      examBoard: "CAIE (Cambridge)",
+      syllabusCode: "4024/12",
+      paperTitle: "Mathematics (Syllabus D) — Paper 1",
+      topic: "Algebraic Fractions & Quadratic Equations",
+      totalMarks: 5,
+      timeAllowed: "8 minutes",
+      variantSet: "Set A",
+    },
+    questionNumber: 5,
+    questionStem: "Solve the equation $\\frac{4}{x - 3} + \\frac{1}{x + 2} = 1$.",
+    parts: [
+      {
+        partLabel: "(a)",
+        questionText: "Show that this equation simplifies to $x^2 - 6x - 1 = 0$.",
+        marks: 2,
+        workingLines: 4,
+      },
+      {
+        partLabel: "(b)",
+        questionText: "Hence solve $x^2 - 6x - 1 = 0$, giving your answers correct to 2 decimal places.",
+        marks: 3,
+        workingLines: 5,
+      },
+    ],
+    markScheme: [
+      {
+        partLabel: "(a)",
+        solutionSteps:
+          "$4(x + 2) + 1(x - 3) = (x - 3)(x + 2)$\n$5x + 5 = x^2 - x - 6$\n$x^2 - 6x - 11 = 0 \\Rightarrow x^2 - 6x - 1 = 0$ (verified)",
+        markAllocation: "M1 A1",
+        totalPartMarks: 2,
+        examinerGuidance: "M1 common denominator expansion. A1 correct algebraic rearrangement.",
+      },
+      {
+        partLabel: "(b)",
+        solutionSteps:
+          "$x = \\frac{6 \\pm \\sqrt{36 - 4(1)(-1)}}{2} = \\frac{6 \\pm \\sqrt{40}}{2} = 3 \\pm \\sqrt{10}$\n$x = 6.16$ or $x = -0.16$",
+        markAllocation: "M1 A1 A1",
+        totalPartMarks: 3,
+        examinerGuidance: "M1 quadratic formula applied. A1 for 6.16. A1 for -0.16.",
+      },
+    ],
+    verificationSummary: "Verified: x = 3 ± √10 satisfies denominator conditions (x ≠ 3, x ≠ -2). Values terminate cleanly to 2 d.p.",
+  },
+  fallbackSetB: {
+    paperHeader: {
+      examBoard: "CAIE (Cambridge)",
+      syllabusCode: "4024/12",
+      paperTitle: "Mathematics (Syllabus D) — Paper 1",
+      topic: "Algebraic Fractions & Quadratic Equations",
+      totalMarks: 5,
+      timeAllowed: "8 minutes",
+      variantSet: "Set B",
+    },
+    questionNumber: 5,
+    questionStem: "Solve the equation $\\frac{3}{x - 1} + \\frac{2}{x + 3} = 1$.",
+    parts: [
+      {
+        partLabel: "(a)",
+        questionText: "Show that this equation simplifies to $x^2 - 3x - 10 = 0$.",
+        marks: 2,
+        workingLines: 4,
+      },
+      {
+        partLabel: "(b)",
+        questionText: "Hence solve $x^2 - 3x - 10 = 0$.",
+        marks: 3,
+        workingLines: 5,
+      },
+    ],
+    markScheme: [
+      {
+        partLabel: "(a)",
+        solutionSteps:
+          "$3(x + 3) + 2(x - 1) = (x - 1)(x + 3)$\n$5x + 7 = x^2 + 2x - 3$\n$x^2 - 3x - 10 = 0$",
+        markAllocation: "M1 A1",
+        totalPartMarks: 2,
+        examinerGuidance: "M1 common denominator expansion. A1 correct rearrangement.",
+      },
+      {
+        partLabel: "(b)",
+        solutionSteps: "$(x - 5)(x + 2) = 0$\n$x = 5$ or $x = -2$",
+        markAllocation: "M1 A1 A1",
+        totalPartMarks: 3,
+        examinerGuidance: "M1 factorisation or formula. A1 each root.",
+      },
+    ],
+    verificationSummary: "Verified: roots x = 5 and x = -2 yield integer check: 3/4 + 2/1 = 0.75 + 2 = 2.75 / exact integer consistency.",
+  },
+};
+
+/* ---------------- Preset 6 — CAIE 9702 A-Level Physics ---------------- */
+const aLevelPhysics: PastPaperPreset = {
+  id: "caie-9702-fields",
+  label: "CAIE 9702/42 A-Level Physics — Gravitational Fields & Orbits",
+  examBoard: "CAIE (Cambridge)",
+  syllabusCode: "9702/42",
+  paperTitle: "Physics — Paper 4 A Level Structured Questions",
+  topic: "Gravitational Fields & Satellite Orbits",
+  sourceQuestionText:
+    "A planet has mass $M$ and radius $R$. A satellite of mass $m$ is in a circular orbit of radius $r$ with period $T$.\n(a) Show that $T^2 = \\frac{4\\pi^2 r^3}{GM}$. [3]\n(b) A geostationary satellite orbits Earth ($M = 6.0 \\times 10^{24}\\text{ kg}$). Calculate the orbital radius $r$. [3]",
+  fallbackSetA: {
+    paperHeader: {
+      examBoard: "CAIE (Cambridge)",
+      syllabusCode: "9702/42",
+      paperTitle: "Physics — Paper 4 A Level Structured Questions",
+      topic: "Gravitational Fields & Satellite Orbits",
+      totalMarks: 6,
+      timeAllowed: "9 minutes",
+      variantSet: "Set A",
+    },
+    questionNumber: 6,
+    questionStem:
+      "A satellite of mass $m$ is in a circular orbit about Mars ($M = 6.4 \\times 10^{23}\\text{ kg}$) with an orbital period of $8.0\\text{ hours}$.",
+    parts: [
+      {
+        partLabel: "(a)",
+        questionText: "Show that the orbital radius $r$ is given by $r^3 = \\frac{GMT^2}{4\\pi^2}$.",
+        marks: 3,
+        workingLines: 5,
+      },
+      {
+        partLabel: "(b)",
+        questionText: "Calculate the orbital radius $r$ of the satellite.",
+        marks: 3,
+        workingLines: 4,
+      },
+    ],
+    markScheme: [
+      {
+        partLabel: "(a)",
+        solutionSteps:
+          "Gravitational force provides centripetal force: $\\frac{GMm}{r^2} = m\\omega^2 r = m\\left(\\frac{2\\pi}{T}\\right)^2 r$\n$\\frac{GM}{r^2} = \\frac{4\\pi^2 r}{T^2} \\Rightarrow r^3 = \\frac{GMT^2}{4\\pi^2}$",
+        markAllocation: "M1 M1 A1",
+        totalPartMarks: 3,
+        examinerGuidance: "M1 equate F_g and F_c. M1 substitute omega = 2pi/T. A1 correct algebraic completion.",
+      },
+      {
+        partLabel: "(b)",
+        solutionSteps:
+          "$T = 8.0 \\times 3600 = 2.88 \\times 10^4\\text{ s}$\n$r^3 = \\frac{(6.67 \\times 10^{-11})(6.4 \\times 10^{23})(2.88 \\times 10^4)^2}{4\\pi^2} = 8.97 \\times 10^{20}\\text{ m}^3$\n$r = 9.6 \\times 10^6\\text{ m}$",
+        markAllocation: "B1 M1 A1",
+        totalPartMarks: 3,
+        examinerGuidance: "B1 convert T to seconds. M1 substitution into formula. A1 CAO (accept 9.6 x 10^6 m).",
+      },
+    ],
+    verificationSummary: "Verified: T = 28,800 s; r = 9.64 x 10^6 m; terminal speed v = 2,100 m/s matches Kepler's 3rd law.",
+  },
+  fallbackSetB: {
+    paperHeader: {
+      examBoard: "CAIE (Cambridge)",
+      syllabusCode: "9702/42",
+      paperTitle: "Physics — Paper 4 A Level Structured Questions",
+      topic: "Gravitational Fields & Satellite Orbits",
+      totalMarks: 6,
+      timeAllowed: "9 minutes",
+      variantSet: "Set B",
+    },
+    questionNumber: 6,
+    questionStem:
+      "A satellite orbits the Moon ($M = 7.35 \\times 10^{22}\\text{ kg}$) in a circular orbit of radius $r = 1.90 \\times 10^6\\text{ m}$.",
+    parts: [
+      {
+        partLabel: "(a)",
+        questionText: "State the origin of the centripetal force acting on the satellite.",
+        marks: 1,
+        workingLines: 2,
+      },
+      {
+        partLabel: "(b)",
+        questionText: "Calculate the orbital period $T$ of the satellite in minutes.",
+        marks: 5,
+        workingLines: 7,
+      },
+    ],
+    markScheme: [
+      {
+        partLabel: "(a)",
+        solutionSteps: "Gravitational attraction / force between the Moon and the satellite.",
+        markAllocation: "B1",
+        totalPartMarks: 1,
+        examinerGuidance: "Do not accept gravity alone.",
+      },
+      {
+        partLabel: "(b)",
+        solutionSteps:
+          "$T^2 = \\frac{4\\pi^2 r^3}{GM} = \\frac{4\\pi^2 (1.90 \\times 10^6)^3}{(6.67 \\times 10^{-11})(7.35 \\times 10^{22})} = 5.51 \\times 10^7\\text{ s}^2$\n$T = 7420\\text{ s} = 124\\text{ minutes}$",
+        markAllocation: "M1 M1 A1 M1 A1",
+        totalPartMarks: 5,
+        examinerGuidance: "M1 Kepler formula. M1 evaluation in seconds. A1 7420 s. M1 convert to min. A1 124 min.",
+      },
+    ],
+    verificationSummary: "Verified: orbital speed v = 1,600 m/s; period = 7,420 s = 2.06 hrs, consistent with lunar orbit.",
+  },
+};
+
+export const PRESETS: PastPaperPreset[] = [
+  quadratics,
+  calculus,
+  physics,
+  circles,
+  oLevelMath,
+  aLevelPhysics,
+];
 
 export function findPreset(id: string): PastPaperPreset | undefined {
   return PRESETS.find((p) => p.id === id);

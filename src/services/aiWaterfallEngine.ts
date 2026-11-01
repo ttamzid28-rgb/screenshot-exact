@@ -63,6 +63,40 @@ export function countArmedProviders(): number {
   return PROVIDERS.filter((p) => getProviderKey(p).trim().length > 0).length;
 }
 
+export async function testProviderConnection(
+  provider: ProviderConfig,
+  key: string
+): Promise<{ ok: boolean; message: string }> {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 6000);
+    const res = await fetch(provider.endpoint, {
+      method: "POST",
+      signal: controller.signal,
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+      body: JSON.stringify({
+        model: provider.model,
+        temperature: 0,
+        max_tokens: 5,
+        messages: [{ role: "user", content: "ping" }],
+      }),
+    });
+    clearTimeout(timer);
+    if (res.ok) {
+      return { ok: true, message: "Connected & operational" };
+    }
+    const errBody = await res.text();
+    let detail = `HTTP ${res.status}`;
+    try {
+      const parsed = JSON.parse(errBody);
+      if (parsed?.error?.message) detail = parsed.error.message;
+    } catch {}
+    return { ok: false, message: detail };
+  } catch (e: any) {
+    return { ok: false, message: e.name === "AbortError" ? "Timed out (6s)" : e.message || "Network error" };
+  }
+}
+
 const MODE_INSTRUCTIONS: Record<VariationMode, string> = {
   strict_isomorphic:
     "STRICT ISOMORPHIC: change every number and constant but keep the identical cognitive steps, command words, part structure and mark allocation.",
@@ -127,6 +161,7 @@ function normalizePaper(raw: unknown, o: GenerateOptions): GeneratedExamPaper {
         workingLines: Math.min(14, Math.max(2, Number(p?.workingLines) || 4)),
       }))
     : [];
+
   const markScheme: MarkSchemeRow[] = Array.isArray(r.markScheme)
     ? r.markScheme.map((m) => ({
         partLabel: String(m?.partLabel ?? ""),
@@ -136,11 +171,14 @@ function normalizePaper(raw: unknown, o: GenerateOptions): GeneratedExamPaper {
         examinerGuidance: String(m?.examinerGuidance ?? ""),
       }))
     : [];
+
   if (parts.length === 0 || markScheme.length === 0) {
     throw new Error("Model returned an incomplete paper");
   }
+
   const totalMarks = parts.reduce((s, p) => s + p.marks, 0);
   const h = (r.paperHeader ?? {}) as Partial<GeneratedExamPaper["paperHeader"]>;
+
   return {
     paperHeader: {
       examBoard: String(h.examBoard || o.examBoard),
@@ -162,6 +200,7 @@ function normalizePaper(raw: unknown, o: GenerateOptions): GeneratedExamPaper {
 async function callProvider(provider: ProviderConfig, key: string, o: GenerateOptions) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
   try {
     const res = await fetch(provider.endpoint, {
       method: "POST",
@@ -177,17 +216,17 @@ async function callProvider(provider: ProviderConfig, key: string, o: GenerateOp
         ],
       }),
     });
+
     if (!res.ok) throw new Error(`${provider.name} HTTP ${res.status}`);
     const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
     const content = data.choices?.[0]?.message?.content;
     if (!content) throw new Error(`${provider.name} returned no content`);
+
     return normalizePaper(parseModelJson(content), o);
   } finally {
     clearTimeout(timer);
   }
 }
-
-/* ---------------- Verified Local Engine ---------------- */
 
 const normalizeText = (s: string) => s.replace(/\s+/g, " ").trim();
 
@@ -196,12 +235,11 @@ export function matchPresetBySource(sourceText: string): PastPaperPreset | undef
   return PRESETS.find((p) => normalizeText(p.sourceQuestionText) === n);
 }
 
-/** Shift standalone numbers (not inside LaTeX command names, not mark brackets). */
 function shiftNumbers(text: string, seed: number): string {
   let k = 0;
   return text.replace(/(?<![\\a-zA-Z^_{])\b(\d+)(?!\])\b/g, (m, num: string) => {
     const n = Number(num);
-    if (n === 0 || n === 1) return m; // keep structural 0/1 (limits, unit coefficients)
+    if (n === 0 || n === 1) return m;
     k++;
     const delta = ((seed + k) % 3) + 1;
     return String(n + delta);
@@ -215,6 +253,7 @@ export function adaptCustomQuestion(o: GenerateOptions): GeneratedExamPaper {
   const stem: string[] = [];
   const parts: ExamQuestionPart[] = [];
   let lastLetter = "";
+
   for (const line of lines) {
     const m = partRe.exec(line);
     if (!m) {
@@ -225,20 +264,24 @@ export function adaptCustomQuestion(o: GenerateOptions): GeneratedExamPaper {
       }
       continue;
     }
+
     let label = m[1] ?? "";
     let body = m[2] ?? "";
     const letter = /^\(([a-z])\)/i.exec(label)?.[1];
     if (letter) lastLetter = letter;
     else if (lastLetter && /^\([ivx]+\)$/i.test(label)) label = `(${lastLetter})${label}`;
+
     const marksMatch = /\[(\d+)\]\s*$/.exec(body);
     const marks = marksMatch ? Number(marksMatch[1]) : 2;
     body = body.replace(/\[(\d+)\]\s*$/, "").trim();
+
     if (!body) {
       stem.push(line);
       continue;
     }
     parts.push({ partLabel: label, questionText: body, marks, workingLines: Math.min(10, marks * 2 + 1) });
   }
+
   if (parts.length === 0) {
     parts.push({
       partLabel: "(a)",
@@ -247,8 +290,10 @@ export function adaptCustomQuestion(o: GenerateOptions): GeneratedExamPaper {
       workingLines: 8,
     });
   }
+
   const adaptedParts = parts.map((p) => ({ ...p, questionText: shiftNumbers(p.questionText, seed) }));
   const totalMarks = adaptedParts.reduce((s, p) => s + p.marks, 0);
+
   return {
     paperHeader: {
       examBoard: o.examBoard,
@@ -289,6 +334,7 @@ export async function generateExamPaper(o: GenerateOptions): Promise<GenerationR
   for (const provider of PROVIDERS) {
     const key = getProviderKey(provider).trim();
     if (!key) continue;
+
     o.onProviderAttempt?.(provider.name);
     const attemptStart = performance.now();
     try {
@@ -303,9 +349,10 @@ export async function generateExamPaper(o: GenerateOptions): Promise<GenerationR
       console.warn(`[Mocklab] ${provider.name} failed, cascading…`, err);
     }
   }
+
   o.onProviderAttempt?.("Verified Local Engine");
-  // Small deliberate pause so the UI state change is perceptible.
   await new Promise((r) => setTimeout(r, 350));
+
   return {
     paper: localFallback(o),
     providerUsed: "Verified Local Engine",

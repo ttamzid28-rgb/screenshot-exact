@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { ArrowRight, Eye, EyeOff, KeyRound, ShieldCheck, Trash2 } from "lucide-react";
+import { ArrowRight, CheckCircle2, Eye, EyeOff, KeyRound, Loader2, ShieldCheck, Trash2, XCircle } from "lucide-react";
 import { toast } from "sonner";
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PROVIDERS } from "@/services/aiWaterfallEngine";
+import { PROVIDERS, testProviderConnection } from "@/services/aiWaterfallEngine";
 
 const PLACEHOLDERS: Record<string, string> = {
   "Groq LPU": "gsk_...",
@@ -31,6 +30,8 @@ interface Props {
 export function ApiKeyModal({ open, onOpenChange, onSaved }: Props) {
   const [values, setValues] = useState<Record<string, string>>({});
   const [visible, setVisible] = useState<Record<string, boolean>>({});
+  const [testing, setTesting] = useState(false);
+  const [testResults, setTestResults] = useState<Record<string, { ok: boolean; message: string }>>({});
 
   useEffect(() => {
     if (!open) return;
@@ -38,6 +39,7 @@ export function ApiKeyModal({ open, onOpenChange, onSaved }: Props) {
     for (const p of PROVIDERS) next[p.storageKey] = window.localStorage.getItem(p.storageKey) ?? "";
     setValues(next);
     setVisible({});
+    setTestResults({});
   }, [open]);
 
   const save = () => {
@@ -54,8 +56,25 @@ export function ApiKeyModal({ open, onOpenChange, onSaved }: Props) {
   const clear = () => {
     for (const p of PROVIDERS) window.localStorage.removeItem(p.storageKey);
     setValues({});
+    setTestResults({});
     onSaved();
     toast("All keys cleared — Verified Local Engine will serve papers");
+  };
+
+  const runKeyTests = async () => {
+    setTesting(true);
+    const results: Record<string, { ok: boolean; message: string }> = {};
+    for (const p of PROVIDERS) {
+      const activeKey = (values[p.storageKey] ?? "").trim() || p.envKey;
+      if (!activeKey) {
+        results[p.name] = { ok: false, message: "No key entered" };
+        continue;
+      }
+      const outcome = await testProviderConnection(p, activeKey);
+      results[p.name] = { ok: outcome.ok, message: outcome.message };
+    }
+    setTestResults(results);
+    setTesting(false);
   };
 
   return (
@@ -74,6 +93,8 @@ export function ApiKeyModal({ open, onOpenChange, onSaved }: Props) {
           {PROVIDERS.map((p) => {
             const v = values[p.storageKey] ?? "";
             const configured = v.trim().length > 0 || p.envKey.length > 0;
+            const res = testResults[p.name];
+
             return (
               <div key={p.storageKey} className="space-y-1.5">
                 <div className="flex items-center justify-between">
@@ -103,9 +124,29 @@ export function ApiKeyModal({ open, onOpenChange, onSaved }: Props) {
                     {visible[p.storageKey] ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                   </button>
                 </div>
+                {res && (
+                  <p className="flex items-center gap-1.5 text-xs">
+                    {res.ok ? (
+                      <span className="flex items-center gap-1 text-emerald-600 font-medium">
+                        <CheckCircle2 className="size-3.5" /> {res.message}
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1 text-destructive font-medium">
+                        <XCircle className="size-3.5" /> {res.message}
+                      </span>
+                    )}
+                  </p>
+                )}
               </div>
             );
           })}
+        </div>
+
+        <div className="flex justify-end">
+          <Button variant="outline" size="sm" disabled={testing} onClick={runKeyTests}>
+            {testing ? <Loader2 className="animate-spin size-3.5 mr-1" /> : null}
+            Test & Verify Keys
+          </Button>
         </div>
 
         <div className="rounded-lg border bg-muted/60 p-3">
@@ -129,7 +170,7 @@ export function ApiKeyModal({ open, onOpenChange, onSaved }: Props) {
 
         <DialogFooter className="gap-2 sm:justify-between">
           <Button variant="outline" onClick={clear}>
-            <Trash2 /> Clear Keys
+            <Trash2 className="mr-1 size-4" /> Clear Keys
           </Button>
           <Button onClick={save}>Save Keys to Browser</Button>
         </DialogFooter>

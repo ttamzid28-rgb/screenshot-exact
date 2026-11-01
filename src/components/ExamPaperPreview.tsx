@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { Edit3, Check } from "lucide-react";
 import { MathRenderer } from "@/components/MathRenderer";
 import type { GeneratedExamPaper } from "@/types/exam";
 
@@ -8,20 +10,37 @@ interface Props {
 }
 
 export function ExamPaperPreview({ paper, showWorkingLines, showCandidateHeader }: Props) {
+  const [editable, setEditable] = useState(false);
   const h = paper.paperHeader;
+
   return (
-    <article className="exam-sheet mx-auto w-full max-w-[210mm] px-8 py-10 sm:px-12">
+    <article className="exam-sheet mx-auto w-full max-w-[210mm] px-8 py-10 sm:px-12 relative">
+      <div className="no-print absolute top-3 right-3">
+        <button
+          type="button"
+          onClick={() => setEditable((v) => !v)}
+          className="inline-flex items-center gap-1.5 rounded border border-paper-line bg-card px-2.5 py-1 text-xs font-medium text-paper-muted hover:text-paper-foreground transition-colors"
+        >
+          {editable ? <Check className="size-3 text-emerald-600" /> : <Edit3 className="size-3" />}
+          {editable ? "Done Editing" : "Edit Text"}
+        </button>
+      </div>
+
       <header className="border-2 border-paper-rule">
         <div className="flex items-stretch justify-between gap-4 p-4">
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-paper-muted">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-paper-muted" contentEditable={editable}>
               {h.examBoard}
             </p>
-            <p className="mt-1 font-mono text-2xl font-semibold text-paper-foreground">
+            <p className="mt-1 font-mono text-2xl font-semibold text-paper-foreground" contentEditable={editable}>
               {h.syllabusCode}
             </p>
-            <p className="mt-1 font-serif text-base text-paper-foreground">{h.paperTitle}</p>
-            <p className="mt-0.5 text-xs text-paper-muted">Topic: {h.topic}</p>
+            <p className="mt-1 font-serif text-base text-paper-foreground" contentEditable={editable}>
+              {h.paperTitle}
+            </p>
+            <p className="mt-0.5 text-xs text-paper-muted" contentEditable={editable}>
+              Topic: {h.topic}
+            </p>
           </div>
           <div className="flex shrink-0 flex-col items-end justify-between gap-2 text-right">
             <span className="border-2 border-paper-rule px-3 py-1 font-mono text-lg font-bold tracking-widest">
@@ -29,7 +48,7 @@ export function ExamPaperPreview({ paper, showWorkingLines, showCandidateHeader 
             </span>
             <div className="text-xs text-paper-muted">
               <p>
-                Time Allowed: <span className="font-semibold text-paper-foreground">{h.timeAllowed}</span>
+                Time Allowed: <span className="font-semibold text-paper-foreground" contentEditable={editable}>{h.timeAllowed}</span>
               </p>
               <p>
                 Total Marks: <span className="font-semibold text-paper-foreground">[{h.totalMarks}]</span>
@@ -37,6 +56,7 @@ export function ExamPaperPreview({ paper, showWorkingLines, showCandidateHeader 
             </div>
           </div>
         </div>
+
         {showCandidateHeader && (
           <div className="grid grid-cols-1 gap-3 border-t-2 border-paper-rule px-4 py-3 text-sm sm:grid-cols-[2fr_1fr]">
             <div className="flex items-end gap-2">
@@ -58,7 +78,9 @@ export function ExamPaperPreview({ paper, showWorkingLines, showCandidateHeader 
       <section className="mt-6 font-serif text-[15px] text-paper-foreground">
         <div className="flex gap-3">
           <span className="font-sans text-base font-bold">{paper.questionNumber}.</span>
-          <MathRenderer text={paper.questionStem} className="block" />
+          <div contentEditable={editable} className="block flex-1 outline-none">
+            <MathRenderer text={paper.questionStem} className="block" />
+          </div>
         </div>
 
         <ol className="mt-5 space-y-6 pl-7">
@@ -66,9 +88,12 @@ export function ExamPaperPreview({ paper, showWorkingLines, showCandidateHeader 
             <li key={`${part.partLabel}-${i}`} className="print-avoid-break">
               <div className="flex items-start gap-3">
                 <span className="w-14 shrink-0 font-semibold">{part.partLabel}</span>
-                <MathRenderer text={part.questionText} className="block flex-1" />
+                <div contentEditable={editable} className="block flex-1 outline-none">
+                  <MathRenderer text={part.questionText} className="block" />
+                </div>
                 <span className="shrink-0 pl-2 font-sans font-bold">[{part.marks}]</span>
               </div>
+
               {showWorkingLines && (
                 <div className="mt-2 pl-[4.25rem]" aria-hidden>
                   {Array.from({ length: part.workingLines }).map((_, j) => (

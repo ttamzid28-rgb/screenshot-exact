@@ -10,8 +10,17 @@ function markVariant(token: string): "method" | "accuracy" | "independent" | "ou
   return "outline";
 }
 
+function formatQuestionPart(qNum: number, rawPart: string): string {
+  const part = rawPart.trim();
+  if (/^Q?\d+/i.test(part)) {
+    return part;
+  }
+  return `${qNum}${part}`;
+}
+
 export function MarkSchemePreview({ paper }: { paper: GeneratedExamPaper }) {
   const h = paper.paperHeader;
+
   return (
     <article className="exam-sheet mx-auto w-full max-w-[210mm] px-8 py-10 sm:px-12">
       <header className="flex flex-wrap items-end justify-between gap-4 border-b-2 border-paper-rule pb-4">
@@ -48,8 +57,7 @@ export function MarkSchemePreview({ paper }: { paper: GeneratedExamPaper }) {
             {paper.markScheme.map((row, i) => (
               <tr key={`${row.partLabel}-${i}`} className="print-avoid-break align-top">
                 <td className="border border-paper-rule px-3 py-3 font-semibold">
-                  {paper.questionNumber}
-                  {row.partLabel}
+                  {formatQuestionPart(paper.questionNumber, row.partLabel)}
                 </td>
                 <td className="border border-paper-rule px-3 py-3 font-serif">
                   <MathRenderer text={row.solutionSteps} className="block" />
