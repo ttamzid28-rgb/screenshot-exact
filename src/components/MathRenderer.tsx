@@ -1,153 +1,71 @@
 import { Fragment, useMemo } from "react";
 import katex from "katex";
-
 import { cn } from "@/lib/utils";
 
 export type Segment =
   | { kind: "text"; value: string }
   | { kind: "math"; value: string; block: boolean };
 
-export const MATH_PATTERN = /\$\$([\s\S]+?)\$\$|\$([\s\S]+?)\$/g;
-
-const BARE_MATH_COMMANDS =
-  "sum|binom|frac|sqrt|int|prod|cdot|times|theta|pi|alpha|beta|gamma|Delta|delta|partial|infty|approx|pm|mp|le|ge|leq|geq|neq|ne|sin|cos|tan|cot|sec|csc|ln|log|exp|rightarrow|Rightarrow|to";
-const BARE_MATH_ARGS =
-  "(?:\\s*(?:\\{[^{}]*\\}|\\[[^\\]]*\\]|_\\{[^{}]*\\}|\\^\\{[^{}]*\\}|_[a-zA-Z0-9+]|\\^[a-zA-Z0-9+]))*";
-const BARE_MATH_REGEX = new RegExp(
-  `(?<!\\$)\\\\(?:${BARE_MATH_COMMANDS})(?![a-zA-Z])${BARE_MATH_ARGS}(?!\\$)`,
-  "g",
-);
-
-const ENGLISH_SENTENCE_GUARD =
-  /\b(therefore|cancel|factor|solutions are|substitute|substituting|hence|using)\b/i;
-
-function isEquationLine(str: string): boolean {
-  const trimmed = str.trim().replace(/[.,;:]$/, "").trim();
-  if (/^\$\$[\s\S]+\$\$$/.test(trimmed) || /^\$[^\$]+\$$/.test(trimmed)) {
-    return false;
-  }
-  const hasEnglishWords =
-    /\b(using|substitute|substituting|cancel|multiply|obtain|hence|therefore|where|because|since|given|consider|show|prove|find|calculate|state|express|determine|verify|factor|factorise|factorising|dividing|adding|subtracting|then|with|and|the|from|into|both|sides)\b/i.test(
-      trimmed,
-    );
-  if (hasEnglishWords) {
-    return false;
-  }
-  const hasRelation = /(=|\\Rightarrow|\\rightarrow|\\le|\\ge|\\approx|<|>)/.test(trimmed);
-  if (!hasRelation) {
-    return false;
-  }
-  const hasMath =
-    /(\\(?:sin|cos|tan|cot|sec|csc|theta|pi|alpha|beta|gamma|Delta|delta|sqrt|frac|pm|mp|cdot|times|int|sum|binom|ln|log|exp)\b|\^|_|[0-9a-zA-Z]\s*[+\-*/=]\s*[0-9a-zA-Z])/.test(
-      trimmed,
-    );
-  return hasMath;
-}
-
-function balanceDollars(text: string): string {
-  const matches = [...text.matchAll(/(?<!\\)\$/g)];
-  if (matches.length % 2 !== 0) {
-    const lastMatch = matches[matches.length - 1];
-    if (lastMatch && lastMatch.index !== undefined) {
-      return text.slice(0, lastMatch.index) + text.slice(lastMatch.index + 1);
-    }
-  }
-  return text;
-}
+// STRICT INVARIANT: Inline math ($...$) MUST NOT match across newlines [^$\n]+.
+// Block math ($$...$$) can span across multiple lines ([\s\S]+?).
+export const MATH_PATTERN = /\$\$([\s\S]+?)\$\$|\$([^$\n]+?)\$/g;
 
 export function sanitizeTextContent(text: string): string {
   if (!text) return "";
-  // 1. Convert literal "\n" strings into real newline characters,
-  // protecting actual LaTeX commands that start with "\n" (\neq, \ne, \notin, \nu, \nabla, \natural, \neg, \newline, \normalsize, \nocorr).
+  // 1. Unescape literal "\n" from JSON while protecting LaTeX commands (\neq, \nu, \nabla, etc.)
   let cleaned = text.replace(/\\n(?!(?:eq|e|otin|u|abla|atural|eg|ewline|ormalsize|ocorr)\b)/g, "\n");
 
-  // 2. Strip standalone \\ lines outside math
-  cleaned = cleaned.replace(/^\s*\\+\s*$/gm, "");
+  // 2. Normalize standard LaTeX display \[ ... \] and inline \( ... \)
+  cleaned = cleaned.replace(/\\\[([\s\S]+?)\\\]/g, (_, m) => `$$${m}$$`);
+  cleaned = cleaned.replace(/\\\(([\s\S]+?)\\\)/g, (_, m) => `$${m}$`);
 
-  // 3. Strip trailing \\ before a newline or end of string
-  cleaned = cleaned.replace(/\\+\s*(\n|$)/g, "\n");
+  // 3. Strip trailing document row-breaks (\\) occurring in plain text
+  cleaned = cleaned.replace(/\\\\+(\s*(\n|$))/g, "$1");
+  cleaned = cleaned.replace(/^\s*\\\\+\s*$/gm, "");
 
-  // Convert standard LaTeX display \[ ... \] and inline \( ... \) delimiters to $$ and $:
-  cleaned = cleaned.replace(/\\\[([\s\S]+?)\\\]/g, (_, math) => `$$${math}$$`);
-  cleaned = cleaned.replace(/\\\(([\s\S]+?)\\\)/g, (_, math) => `$${math}$`);
-
-  // Auto-balance dollar signs: strip trailing orphaned unescaped $ if odd count
-  cleaned = balanceDollars(cleaned);
-
-  // Clean degree formatting: normalize unicode degree symbol
-  cleaned = cleaned.replace(/(\d+(?:\.\d+)?)\s*°/g, "$1^\\circ");
-
-  // Full-Line Equation Auto-Wrapping:
-  // Detect non-delimited lines representing full equations and wrap them in $$...$$ or $...$ for bullet items
-  const lines = cleaned.split("\n");
-  const processedLines = lines.map((line) => {
-    const bulletMatch = line.match(/^(\s*(?:[•\-*]|\(\w+\))\s+)(.+)$/);
-    const prefix = bulletMatch?.[1] ?? "";
-    const body = bulletMatch?.[2] ?? line;
-
-    if (isEquationLine(body)) {
-      const matchPunct = body.match(/^(.*?)([.,;:]?)$/);
-      const expr = matchPunct?.[1]?.trim() ?? body.trim();
-      const punct = matchPunct?.[2] ?? "";
-
-      if (prefix) {
-        return `${prefix}$${expr}$${punct}`;
-      } else {
-        return `$$${expr}$$${punct ? `\n` : ""}`;
+  // 4. Per-line dollar balance guard: if a line has an odd number of $, strip the lone trailing $
+  cleaned = cleaned
+    .split("\n")
+    .map((line) => {
+      const count = (line.match(/(?<!\\)\$/g) || []).length;
+      if (count % 2 !== 0) {
+        const last = line.lastIndexOf("$");
+        return line.slice(0, last) + line.slice(last + 1);
       }
-    }
-    return line;
-  });
-  cleaned = processedLines.join("\n");
+      return line;
+    })
+    .join("\n");
 
-  // Clean up excessive newlines
-  cleaned = cleaned.replace(/\n{3,}/g, "\n\n");
-
-  // Auto-wrap bare LaTeX commands & degree expressions outside of $...$
-  let result = "";
-  let lastIndex = 0;
-  for (const match of cleaned.matchAll(MATH_PATTERN)) {
-    const idx = match.index ?? 0;
-    if (idx > lastIndex) {
-      let nonMath = cleaned.slice(lastIndex, idx);
-      nonMath = nonMath.replace(/\\{2,}/g, " ");
-      nonMath = nonMath.replace(/(?<!\$)\b(\d+)\^\{?\\circ\}?(?!\$)/g, (_, d) => `$${d}^\\circ$`);
-      result += nonMath.replace(BARE_MATH_REGEX, (m) => `$${m.trim()}$`);
-    }
-    result += match[0];
-    lastIndex = idx + match[0].length;
-  }
-  if (lastIndex < cleaned.length) {
-    let nonMath = cleaned.slice(lastIndex);
-    nonMath = nonMath.replace(/\\{2,}/g, " ");
-    nonMath = nonMath.replace(/(?<!\$)\b(\d+)\^\{?\\circ\}?(?!\$)/g, (_, d) => `$${d}^\\circ$`);
-    result += nonMath.replace(BARE_MATH_REGEX, (m) => `$${m.trim()}$`);
-  }
-
-  return balanceDollars(result);
+  return cleaned;
 }
 
 export function splitMath(text: string): Segment[] {
+  const sanitized = sanitizeTextContent(text);
   const segments: Segment[] = [];
   let lastIndex = 0;
-  for (const match of text.matchAll(MATH_PATTERN)) {
+
+  for (const match of sanitized.matchAll(MATH_PATTERN)) {
     const index = match.index ?? 0;
-    if (index > lastIndex) segments.push({ kind: "text", value: text.slice(lastIndex, index) });
-    if (match[1] !== undefined) {
-      segments.push({ kind: "math", value: match[1], block: true });
-    } else {
-      const inlineMath = match[2] ?? "";
-      // Anti-squishing guard: if inline math block accidentally captured a full English sentence,
-      // treat as plain text so KaTeX doesn't render it as squished multiplied variables.
-      if (ENGLISH_SENTENCE_GUARD.test(inlineMath) && /\s[a-zA-Z]{3,}\s/.test(inlineMath)) {
-        segments.push({ kind: "text", value: inlineMath });
-      } else {
-        segments.push({ kind: "math", value: inlineMath, block: false });
-      }
+    if (index > lastIndex) {
+      segments.push({ kind: "text", value: sanitized.slice(lastIndex, index) });
     }
+    const mathContent = match[1] !== undefined ? match[1] : match[2] ?? "";
+    const isBlock = match[1] !== undefined;
+
+    // Safety guard: if an inline math block contains full English sentences (preventing word squishing)
+    if (!isBlock && /\b(Therefore|solutions|Factor|Cancel|substitute|gives|Hence|Find|equation|normal|curve)\s+[a-z]+/i.test(mathContent)) {
+      segments.push({ kind: "text", value: mathContent });
+    } else {
+      segments.push({ kind: "math", value: mathContent.trim(), block: isBlock });
+    }
+
     lastIndex = index + match[0].length;
   }
-  if (lastIndex < text.length) segments.push({ kind: "text", value: text.slice(lastIndex) });
+
+  if (lastIndex < sanitized.length) {
+    segments.push({ kind: "text", value: sanitized.slice(lastIndex) });
+  }
+
   return segments;
 }
 
@@ -160,7 +78,7 @@ function renderKatex(math: string, block: boolean): string {
       output: "html",
     });
   } catch {
-    // Absolute last resort: show the expression as escaped plain text, never raw $ delimiters.
+    // Graceful fallback: render escaped text instead of KaTeX's red error markup
     return math.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c] ?? c);
   }
 }
@@ -180,8 +98,7 @@ function TextWithBreaks({ value }: { value: string }) {
 }
 
 export function MathRenderer({ text, className }: { text: string; className?: string }) {
-  const cleaned = useMemo(() => sanitizeTextContent(text ?? ""), [text]);
-  const segments = useMemo(() => splitMath(cleaned), [cleaned]);
+  const segments = useMemo(() => splitMath(text ?? ""), [text]);
   return (
     <span className={cn("leading-relaxed", className)}>
       {segments.map((seg, i) =>
@@ -190,7 +107,7 @@ export function MathRenderer({ text, className }: { text: string; className?: st
         ) : seg.block ? (
           <span
             key={i}
-            className="block"
+            className="my-1.5 block overflow-x-auto text-center"
             dangerouslySetInnerHTML={{ __html: renderKatex(seg.value, true) }}
           />
         ) : (

@@ -444,14 +444,14 @@ export const PRESETS: PastPaperPreset[] = [
       "markScheme": [
         {
           "partLabel": "(a)",
-          "solutionSteps": "$\\text{Arc } AB = r\\theta = 8 \\times \\frac{\\pi}{3} = \\frac{8\\pi}{3}\\text{ cm}$\nIn right-angled $\\triangle OAC$: $AC = 8\\tan(\\pi/3) = 8\\sqrt{3}\\text{ cm}$\n$OC = \\frac{8}{\\cos(\\pi/3)} = \\frac{8}{1/2} = 16\\text{ cm} \\Rightarrow BC = 16 - 8 = 8\\text{ cm}$\n$\\text{Perimeter} = 8\\sqrt{3} + 8 + \\frac{8\\pi}{3}$",
+          "solutionSteps": "Arc $AB = r\\theta = 8 \\times \\frac{\\pi}{3} = \\frac{8\\pi}{3}\\text{ cm}$\n\nIn right-angled $\\triangle OAC$:\n$AC = 8\\tan(\\frac{\\pi}{3}) = 8\\sqrt{3}\\text{ cm}$\n$OC = \\frac{8}{\\cos(\\pi/3)} = 16\\text{ cm} \\Rightarrow BC = 16 - 8 = 8\\text{ cm}$\n\n$\\text{Perimeter} = 8\\sqrt{3} + 8 + \\frac{8\\pi}{3}\\text{ cm}$",
           "markAllocation": "B1 B1 M1 A1",
           "totalPartMarks": 4,
           "examinerGuidance": "B1 arc length. B1 AC. M1 find BC = OC - r and sum all three. A1 exact expression."
         },
         {
           "partLabel": "(b)",
-          "solutionSteps": "$\\text{Area}(\\triangle OAC) = \\frac{1}{2} \\times 8 \\times 8\\sqrt{3} = 32\\sqrt{3}\\text{ cm}^2$\n$\\text{Area}(\\text{sector } OAB) = \\frac{1}{2} r^2 \\theta = \\frac{1}{2}(64)\\left(\\frac{\\pi}{3}\\right) = \\frac{32\\pi}{3}\\text{ cm}^2$\n$\\text{Shaded area} = 32\\sqrt{3} - \\frac{32\\pi}{3}$",
+          "solutionSteps": "$\\text{Area}(\\triangle OAC) = \\frac{1}{2} \\times 8 \\times 8\\sqrt{3} = 32\\sqrt{3}\\text{ cm}^2$\n$\\text{Area}(\\text{sector } OAB) = \\frac{1}{2} r^2 \\theta = \\frac{1}{2}(64)(\\frac{\\pi}{3}) = \\frac{32\\pi}{3}\\text{ cm}^2$\n\n$\\text{Shaded area} = 32\\sqrt{3} - \\frac{32\\pi}{3}\\text{ cm}^2$",
           "markAllocation": "M1 M1 A1",
           "totalPartMarks": 3,
           "examinerGuidance": "M1 triangle area. M1 sector area. A1 exact difference."
@@ -488,14 +488,14 @@ export const PRESETS: PastPaperPreset[] = [
       "markScheme": [
         {
           "partLabel": "(a)",
-          "solutionSteps": "$\\text{Arc } AB = r\\theta = 6 \\times \\frac{\\pi}{4} = \\frac{3\\pi}{2}\\text{ cm}$\nIn right-angled $\\triangle OAC$: $AC = 6\\tan(\\pi/4) = 6\\text{ cm}$\n$OC = \\frac{6}{\\cos(\\pi/4)} = 6\\sqrt{2}\\text{ cm} \\Rightarrow BC = 6\\sqrt{2} - 6\\text{ cm}$\n$\\text{Perimeter} = 6 + (6\\sqrt{2} - 6) + \\frac{3\\pi}{2} = 6\\sqrt{2} + \\frac{3\\pi}{2}$",
+          "solutionSteps": "Arc $AB = r\\theta = 6 \\times \\frac{\\pi}{4} = \\frac{3\\pi}{2}\\text{ cm}$\n\nIn right-angled $\\triangle OAC$:\n$AC = 6\\tan(\\frac{\\pi}{4}) = 6\\text{ cm}$\n$OC = \\frac{6}{\\cos(\\pi/4)} = 6\\sqrt{2}\\text{ cm} \\Rightarrow BC = 6\\sqrt{2} - 6\\text{ cm}$\n\n$\\text{Perimeter} = 6 + (6\\sqrt{2} - 6) + \\frac{3\\pi}{2} = 6\\sqrt{2} + \\frac{3\\pi}{2}\\text{ cm}$",
           "markAllocation": "B1 B1 M1 A1",
           "totalPartMarks": 4,
           "examinerGuidance": "B1 arc length. B1 AC = 6. M1 BC = 6√2 - 6 and sum. A1 exact expression."
         },
         {
           "partLabel": "(b)",
-          "solutionSteps": "$\\text{Area}(\\triangle OAC) = \\frac{1}{2} \\times 6 \\times 6 = 18\\text{ cm}^2$\n$\\text{Area}(\\text{sector } OAB) = \\frac{1}{2}(36)\\left(\\frac{\\pi}{4}\\right) = \\frac{9\\pi}{2}\\text{ cm}^2$\n$\\text{Shaded area} = 18 - \\frac{9\\pi}{2}$",
+          "solutionSteps": "$\\text{Area}(\\triangle OAC) = \\frac{1}{2} \\times 6 \\times 6 = 18\\text{ cm}^2$\n$\\text{Area}(\\text{sector } OAB) = \\frac{1}{2}(36)(\\frac{\\pi}{4}) = \\frac{9\\pi}{2}\\text{ cm}^2$\n\n$\\text{Shaded area} = 18 - \\frac{9\\pi}{2}\\text{ cm}^2$",
           "markAllocation": "M1 M1 A1",
           "totalPartMarks": 3,
           "examinerGuidance": "M1 triangle area. M1 sector area. A1 exact difference."

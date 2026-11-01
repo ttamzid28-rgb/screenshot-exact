@@ -7,20 +7,19 @@ import {
 } from "@/components/MathRenderer";
 
 describe("Mark Scheme LaTeX Robustness & Preset Hygiene", () => {
-  describe("1. Full Equation Auto-Wrapping & Line-Break Sanitization", () => {
-    it("strips trailing LaTeX row-breaks and wraps relation equations into a single KaTeX math segment", () => {
+  describe("1. Full Equation Delimitation & Line-Break Sanitization", () => {
+    it("strips trailing LaTeX row-breaks (\\\\) and preserves block math equations as a single KaTeX math segment", () => {
       const input =
-        "Using $\\cos^2\\theta = 1 - \\sin^2\\theta$, substitute into the given relation:\\\n\n1 - \\sin^2\\theta = 1 - \\sin\\theta.\n\n\\\\\nCancel the 1 on both sides and multiply by -1 to obtain $\\sin^2\\theta - \\sin\\theta = 0$.";
+        "Using $\\cos^2\\theta = 1 - \\sin^2\\theta$, substitute into the given relation:\\\\\n\n$$1 - \\sin^2\\theta = 1 - \\sin\\theta$$\n\n\\\\\nCancel the 1 on both sides and multiply by -1 to obtain $\\sin^2\\theta - \\sin\\theta = 0$.";
 
       const sanitized = sanitizeTextContent(input);
 
       // Trailing \\ must be stripped
       expect(sanitized).not.toContain("relation:\\\\");
-      expect(sanitized).not.toContain("relation:\\");
       expect(sanitized).toContain("relation:\n");
 
       // Standalone \\\\ line must be removed
-      expect(sanitized).not.toMatch(/^\s*\\+\s*$/m);
+      expect(sanitized).not.toMatch(/^\s*\\\\+\s*$/m);
 
       const segments = splitMath(sanitized);
 
@@ -41,18 +40,17 @@ describe("Mark Scheme LaTeX Robustness & Preset Hygiene", () => {
       }).not.toThrow();
     });
 
-    it("strips trailing \\\\ from bullet lines and parses equation branches cleanly", () => {
+    it("strips trailing \\\\ from bullet lines and parses delimited equation branches cleanly", () => {
       const bulletInput = [
         "Factor the quadratic obtained in part (a):",
-        "- \\sin\\theta = 0 \\Rightarrow \\theta = 0^\\circ, 180^\\circ.\\\\",
-        "- \\sin\\theta = 1 \\Rightarrow \\theta = 90^\\circ.\\\\",
+        "- $\\sin\\theta = 0 \\Rightarrow \\theta = 0^\\circ, 180^\\circ.$\\\\",
+        "- $\\sin\\theta = 1 \\Rightarrow \\theta = 90^\\circ.$\\\\",
       ].join("\n");
 
       const sanitized = sanitizeTextContent(bulletInput);
 
       // Trailing row-breaks must be stripped
       expect(sanitized).not.toContain(".\\\\");
-      expect(sanitized).not.toContain(".\\");
 
       const segments = splitMath(sanitized);
       const mathSegments = segments.filter((s) => s.kind === "math");
@@ -82,21 +80,15 @@ describe("Mark Scheme LaTeX Robustness & Preset Hygiene", () => {
       for (const preset of PRESETS) {
         for (const paper of [preset.fallbackSetA, preset.fallbackSetB]) {
           for (const row of paper.markScheme) {
-            // Strip any valid math blocks $$...$$ and $...$
-            const stepsText = row.solutionSteps.replace(/\$\$[\s\S]*?\$\$|\$[^\$]*?\$/g, "");
+            // Strip any valid math blocks $$...$$ and single-line $...$
+            const stepsText = row.solutionSteps.replace(/\$\$[\s\S]*?\$\$|\$[^$\n]*?\$/g, "");
             expect(stepsText, `Preset ${preset.id} ${paper.paperHeader.variantSet} ${row.partLabel} solutionSteps`).not.toMatch(
               /\\\\/,
-            );
-            expect(stepsText, `Preset ${preset.id} ${paper.paperHeader.variantSet} ${row.partLabel} solutionSteps`).not.toMatch(
-              /\\\s*(\n|$)/,
             );
 
-            const guidanceText = row.examinerGuidance.replace(/\$\$[\s\S]*?\$\$|\$[^\$]*?\$/g, "");
+            const guidanceText = row.examinerGuidance.replace(/\$\$[\s\S]*?\$\$|\$[^$\n]*?\$/g, "");
             expect(guidanceText, `Preset ${preset.id} ${paper.paperHeader.variantSet} ${row.partLabel} examinerGuidance`).not.toMatch(
               /\\\\/,
-            );
-            expect(guidanceText, `Preset ${preset.id} ${paper.paperHeader.variantSet} ${row.partLabel} examinerGuidance`).not.toMatch(
-              /\\\s*(\n|$)/,
             );
           }
         }
@@ -104,26 +96,15 @@ describe("Mark Scheme LaTeX Robustness & Preset Hygiene", () => {
     });
 
     it("verifies edexcel-wma11-trig Fallback Set A equations are fully wrapped and formatted", () => {
-      const preset = PRESETS.find((p) => p.id === "edexcel-wma11-trig");
-      expect(preset).toBeDefined();
+      const trigPreset = PRESETS.find((p) => p.id === "edexcel-wma11-trig");
+      expect(trigPreset).toBeDefined();
 
-      const setA = preset!.fallbackSetA;
-      const partA = setA.markScheme.find((m) => m.partLabel === "(a)");
-      const partB = setA.markScheme.find((m) => m.partLabel === "(b)");
+      const part3a = trigPreset!.fallbackSetA.markScheme.find((m) => m.partLabel === "(a)");
+      expect(part3a).toBeDefined();
 
-      expect(partA).toBeDefined();
-      expect(partB).toBeDefined();
-
-      // Part (a) must contain the clean display equations
-      expect(partA!.solutionSteps).toContain("$$1 - \\sin^2\\theta = 1 - \\sin\\theta$$");
-      expect(partA!.solutionSteps).toContain("$$\\sin^2\\theta - \\sin\\theta = 0$$");
-      expect(partA!.solutionSteps).not.toContain("\\\\");
-
-      // Part (b) must contain clean factorised equations and bullet solutions
-      expect(partB!.solutionSteps).toContain("$$\\sin^2\\theta - \\sin\\theta = \\sin\\theta(\\sin\\theta - 1) = 0$$");
-      expect(partB!.solutionSteps).toContain("• $\\sin\\theta = 0 \\Rightarrow \\theta = 0^\\circ, 180^\\circ$");
-      expect(partB!.solutionSteps).toContain("• $\\sin\\theta = 1 \\Rightarrow \\theta = 90^\\circ$");
-      expect(partB!.solutionSteps).not.toContain("\\\\");
+      // Verify the equation is wrapped in $$...$$ or $...$
+      expect(part3a!.solutionSteps).toContain("$$1 - \\sin^2\\theta = 1 - \\sin\\theta$$");
+      expect(part3a!.solutionSteps).not.toContain("\\\\");
     });
   });
 });

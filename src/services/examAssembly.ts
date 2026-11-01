@@ -1,6 +1,6 @@
 import type { AssembledExam, ExamBoard, GeneratedExamPaper, VariantSet } from "@/types/exam";
 
-export const EXAM_QUEUE_STORAGE_KEY = "mocklab_exam_queue";
+export const EXAM_QUEUE_STORAGE_KEY = "mocklab_exam_queue_v3";
 
 /**
  * Strips duplicate leading question number prefixes from part labels.

@@ -138,6 +138,17 @@ export function MocklabWorkspace() {
 
   useEffect(() => setArmed(countArmedProviders()), []);
 
+  // Automatic storage cache buster: flush legacy cache keys
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        if (window.localStorage.getItem("mocklab_exam_queue")) {
+          window.localStorage.removeItem("mocklab_exam_queue");
+        }
+      } catch {}
+    }
+  }, []);
+
   const [examQueue, setExamQueue] = useState<GeneratedExamPaper[]>(() => loadExamQueue());
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -189,6 +200,7 @@ export function MocklabWorkspace() {
   const handleClearQueue = () => {
     setExamQueue([]);
     try {
+      window.localStorage.removeItem("mocklab_exam_queue_v3");
       window.localStorage.removeItem("mocklab_exam_queue");
     } catch {}
     setView("paper");

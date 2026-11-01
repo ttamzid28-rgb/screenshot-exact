@@ -34,61 +34,61 @@ describe("LaTeX Sanitizer & MathRenderer Integrity", () => {
     });
   });
 
-  describe("2. Bare LaTeX Auto-Wrapping", () => {
-    it("wraps raw expressions with \\binom{6}{0} and \\sum_{k=0}^n without dollar signs into $...$ and parses them as math segments", () => {
-      const raw = "Raw expressions with \\binom{6}{0} and \\sum_{k=0}^n without dollar signs";
-      const sanitized = sanitizeTextContent(raw);
-
-      expect(sanitized).toContain("$\\binom{6}{0}$");
-      expect(sanitized).toContain("$\\sum_{k=0}^n$");
-
-      const segments = splitMath(sanitized);
-      const mathSegments = segments.filter((s) => s.kind === "math");
-
-      expect(mathSegments).toHaveLength(2);
-      expect(mathSegments[0]).toEqual({
-        kind: "math",
-        value: "\\binom{6}{0}",
-        block: false,
-      });
-      expect(mathSegments[1]).toEqual({
-        kind: "math",
-        value: "\\sum_{k=0}^n",
-        block: false,
-      });
-    });
-
-    it("auto-wraps bare \\frac, \\sqrt, and greek letters like \\theta outside dollar signs", () => {
-      const raw = "The solution is \\frac{1}{2} with angle \\theta and \\sqrt{3}.";
-      const sanitized = sanitizeTextContent(raw);
-
-      expect(sanitized).toContain("$\\frac{1}{2}$");
-      expect(sanitized).toContain("$\\theta$");
-      expect(sanitized).toContain("$\\sqrt{3}$");
-
-      const segments = splitMath(sanitized);
-      const mathSegments = segments.filter((s) => s.kind === "math");
-      expect(mathSegments.some((s) => s.kind === "math" && s.value === "\\frac{1}{2}")).toBe(true);
-      expect(mathSegments.some((s) => s.kind === "math" && s.value === "\\theta")).toBe(true);
-      expect(mathSegments.some((s) => s.kind === "math" && s.value === "\\sqrt{3}")).toBe(true);
-    });
-
-    it("does not double-wrap math already inside $...$ or $$...$$", () => {
-      const input = "Already wrapped: $\\frac{a}{b}$ and $$\\sum_{i=1}^n i$$ in math.";
-      const sanitized = sanitizeTextContent(input);
-
-      expect(sanitized).toBe(input);
-      const segments = splitMath(sanitized);
-      const mathSegments = segments.filter((s) => s.kind === "math");
-      expect(mathSegments).toHaveLength(2);
-    });
-
-    it("converts standard LaTeX display \\[ ... \\] and inline \\( ... \\) delimiters", () => {
+  describe("2. Universal Delimiter Normalization & Single-Line Invariants", () => {
+    it("converts standard LaTeX display \\[ ... \] and inline \\( ... \\) delimiters to $$ and $", () => {
       const input = "Inline \\(a^2 + b^2 = c^2\\) and block \\[\\int_0^1 x\\,dx = \\frac{1}{2}\\]";
       const sanitized = sanitizeTextContent(input);
 
       expect(sanitized).toContain("$a^2 + b^2 = c^2$");
       expect(sanitized).toContain("$$\\int_0^1 x\\,dx = \\frac{1}{2}$$");
+
+      const segments = splitMath(sanitized);
+      const mathSegments = segments.filter((s) => s.kind === "math");
+      expect(mathSegments).toHaveLength(2);
+      expect(mathSegments[0]?.block).toBe(false);
+      expect(mathSegments[1]?.block).toBe(true);
+    });
+
+    it("enforces strict single-line inline math ($[^$\\n]+?$) so inline math never spans across newlines", () => {
+      const multilineInput = "Line 1 with open $x + y = 1\nLine 2 with $z = 2$ and closing $.";
+      const sanitized = sanitizeTextContent(multilineInput);
+      const segments = splitMath(sanitized);
+
+      // Math across newlines must not be joined into a giant broken inline block
+      const multiLineMath = segments.find(
+        (s) => s.kind === "math" && s.value.includes("\n") && !s.block,
+      );
+      expect(multiLineMath).toBeUndefined();
+    });
+
+    it("strips trailing document row-breaks (\\\\) occurring in plain text", () => {
+      const input = "First line\\\\\nSecond line\\\\\nThird line";
+      const sanitized = sanitizeTextContent(input);
+
+      expect(sanitized).not.toMatch(/\\\\/);
+      expect(sanitized).toBe("First line\nSecond line\nThird line");
+    });
+
+    it("applies per-line dollar balance guard stripping orphaned trailing $", () => {
+      const input = "Line with balanced $x = 1$.\nLine with orphaned $x = 2 and extra $\nClean line.";
+      const sanitized = sanitizeTextContent(input);
+
+      const lines = sanitized.split("\n");
+      for (const line of lines) {
+        const count = (line.match(/(?<!\\)\$/g) || []).length;
+        expect(count % 2).toBe(0);
+      }
+    });
+
+    it("protects English sentences from word-squishing when trapped inside inline math delimiters", () => {
+      const trappedInput = "Step 1: $Therefore the only valid solutions are x = 3$";
+      const segments = splitMath(trappedInput);
+
+      // Trapped English sentence must fall back to plain text to preserve spaces
+      const textSeg = segments.find(
+        (s) => s.kind === "text" && s.value.includes("Therefore the only valid solutions"),
+      );
+      expect(textSeg).toBeDefined();
     });
   });
 
