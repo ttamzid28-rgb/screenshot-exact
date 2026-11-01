@@ -26,7 +26,7 @@ export const PROVIDERS: ProviderConfig[] = [
     name: "Groq LPU",
     role: "Primary",
     endpoint: "https://api.groq.com/openai/v1/chat/completions",
-    model: "llama-3.3-70b-versatile",
+    model: "openai/gpt-oss-120b",
     storageKey: "mb_groq_key",
     envKey:
       (import.meta.env["VITE_GROQ_API_KEY"] as string | undefined) ||
@@ -219,7 +219,14 @@ async function callProvider(provider: ProviderConfig, key: string, o: GenerateOp
       }),
     });
 
-    if (!res.ok) throw new Error(`${provider.name} HTTP ${res.status}`);
+    if (!res.ok) {
+      let detail = `HTTP ${res.status}`;
+      try {
+        const errJson = (await res.json()) as { error?: { message?: string } };
+        if (errJson?.error?.message) detail = `${detail} (${errJson.error.message})`;
+      } catch {}
+      throw new Error(`${provider.name} ${detail}`);
+    }
     const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
     const content = data.choices?.[0]?.message?.content;
     if (!content) throw new Error(`${provider.name} returned no content`);
@@ -333,6 +340,8 @@ export function localFallback(o: GenerateOptions): GeneratedExamPaper {
 
 export async function generateExamPaper(o: GenerateOptions): Promise<GenerationResult> {
   const start = performance.now();
+  const providerErrors: string[] = [];
+
   for (const provider of PROVIDERS) {
     const key = getProviderKey(provider).trim();
     if (!key) continue;
@@ -347,7 +356,9 @@ export async function generateExamPaper(o: GenerateOptions): Promise<GenerationR
         latencyMs: Math.round(performance.now() - attemptStart),
         isFallback: false,
       };
-    } catch (err) {
+    } catch (err: any) {
+      const msg = err?.message || String(err);
+      providerErrors.push(msg);
       console.warn(`[Mocklab] ${provider.name} failed, cascading…`, err);
     }
   }
@@ -355,8 +366,13 @@ export async function generateExamPaper(o: GenerateOptions): Promise<GenerationR
   o.onProviderAttempt?.("Verified Local Engine");
   await new Promise((r) => setTimeout(r, 350));
 
+  const paper = localFallback(o);
+  if (providerErrors.length > 0) {
+    paper.verificationSummary = `[Failover: ${providerErrors.join("; ")}] ${paper.verificationSummary}`;
+  }
+
   return {
-    paper: localFallback(o),
+    paper,
     providerUsed: "Verified Local Engine",
     latencyMs: Math.round(performance.now() - start),
     isFallback: true,
