@@ -220,12 +220,12 @@ async function callProvider(provider: ProviderConfig, key: string, o: GenerateOp
     });
 
     if (!res.ok) {
-      let detail = `HTTP ${res.status}`;
+      let detail = "";
       try {
         const errJson = (await res.json()) as { error?: { message?: string } };
-        if (errJson?.error?.message) detail = `${detail} (${errJson.error.message})`;
+        if (errJson?.error?.message) detail = errJson.error.message;
       } catch {}
-      throw new Error(`${provider.name} ${detail}`);
+      throw new Error(`${provider.name} HTTP ${res.status}${detail ? `: ${detail}` : ""}`);
     }
     const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
     const content = data.choices?.[0]?.message?.content;

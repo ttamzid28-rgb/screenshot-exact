@@ -562,7 +562,7 @@ const oLevelMath: PastPaperPreset = {
       variantSet: "Set A",
     },
     questionNumber: 5,
-    questionStem: "Solve the equation $\\frac{4}{x - 3} + \\frac{1}{x + 2} = 1$.",
+    questionStem: "Solve the equation $\\frac{2}{x - 3} + \\frac{3}{x + 2} = 1$.",
     parts: [
       {
         partLabel: "(a)",
@@ -581,7 +581,7 @@ const oLevelMath: PastPaperPreset = {
       {
         partLabel: "(a)",
         solutionSteps:
-          "$4(x + 2) + 1(x - 3) = (x - 3)(x + 2)$\n$5x + 5 = x^2 - x - 6$\n$x^2 - 6x - 11 = 0 \\Rightarrow x^2 - 6x - 1 = 0$ (verified)",
+          "$2(x + 2) + 3(x - 3) = (x - 3)(x + 2)$\n$5x - 5 = x^2 - x - 6$\n$x^2 - 6x - 1 = 0$",
         markAllocation: "M1 A1",
         totalPartMarks: 2,
         examinerGuidance: "M1 common denominator expansion. A1 correct algebraic rearrangement.",

@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import {
   CheckCircle2,
+  Code,
   Dices,
+  ExternalLink,
+  Eye,
   FileCheck2,
   FileText,
   GraduationCap,
@@ -17,6 +20,7 @@ import { toast } from "sonner";
 import { ApiKeyModal } from "@/components/ApiKeyModal";
 import { ExamPaperPreview } from "@/components/ExamPaperPreview";
 import { MarkSchemePreview } from "@/components/MarkSchemePreview";
+import { MathRenderer } from "@/components/MathRenderer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -41,7 +45,7 @@ import type {
   VariationMode,
 } from "@/types/exam";
 
-type View = "paper" | "scheme" | "pack";
+type View = "original" | "paper" | "scheme" | "pack";
 
 interface Telemetry {
   provider: ProviderName;
@@ -56,6 +60,15 @@ const MODES: { value: VariationMode; title: string; desc: string }[] = [
 ];
 
 const BOARDS: ExamBoard[] = ["CAIE (Cambridge)", "Pearson Edexcel"];
+
+function getPapaCambridgeUrl(code: string): string {
+  if (code.includes("9709")) return "https://pastpapers.papacambridge.com/papers/caie/as-and-a-level-mathematics-9709";
+  if (code.includes("4024")) return "https://pastpapers.papacambridge.com/papers/caie/o-level-mathematics-d-4024";
+  if (code.includes("5054")) return "https://pastpapers.papacambridge.com/papers/caie/o-level-physics-5054";
+  if (code.includes("9702")) return "https://pastpapers.papacambridge.com/papers/caie/as-and-a-level-physics-9702";
+  if (code.includes("WMA11")) return "https://pastpapers.papacambridge.com/papers/edexcel";
+  return "https://pastpapers.papacambridge.com";
+}
 
 function telemetryLabel(t: Telemetry): string {
   const ms = t.latencyMs !== null ? ` • ${t.latencyMs.toLocaleString()}ms` : "";
@@ -76,9 +89,30 @@ export function MocklabWorkspace() {
   const [examBoard, setExamBoard] = useState<ExamBoard>(initial.examBoard);
   const [syllabus, setSyllabus] = useState(initial.syllabusCode);
   const [presetId, setPresetId] = useState(initial.id);
-  const [sourceText, setSourceText] = useState(initial.sourceQuestionText);
+  const [sourcePreviewMode, setSourcePreviewMode] = useState<"edit" | "preview">("preview");
+
+  const [sourceText, setSourceText] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = window.localStorage.getItem("mocklab_source_text");
+      if (saved) return saved;
+    }
+    return initial.sourceQuestionText;
+  });
+
   const [mode, setMode] = useState<VariationMode>("strict_isomorphic");
-  const [paper, setPaper] = useState<GeneratedExamPaper>(initial.fallbackSetA);
+
+  const [paper, setPaper] = useState<GeneratedExamPaper>(() => {
+    if (typeof window !== "undefined") {
+      const saved = window.localStorage.getItem("mocklab_active_paper");
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch {}
+      }
+    }
+    return initial.fallbackSetA;
+  });
+
   const [telemetry, setTelemetry] = useState<Telemetry>({
     provider: "Verified Local Engine",
     latencyMs: null,
@@ -94,15 +128,20 @@ export function MocklabWorkspace() {
 
   useEffect(() => setArmed(countArmedProviders()), []);
 
-  const syllabusOption = SYLLABUS_OPTIONS.find((s) => s.value === syllabus) ?? SYLLABUS_OPTIONS[0]!;
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("mocklab_source_text", sourceText);
+    } catch {}
+  }, [sourceText]);
 
-  const changeBoard = (board: ExamBoard) => {
-    setExamBoard(board);
-    if (syllabusOption.examBoard !== board) {
-      const first = SYLLABUS_OPTIONS.find((s) => s.examBoard === board);
-      if (first) setSyllabus(first.value);
-    }
-  };
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("mocklab_active_paper", JSON.stringify(paper));
+    } catch {}
+  }, [paper]);
+
+  const syllabusOption = SYLLABUS_OPTIONS.find((s) => s.value === syllabus) ?? SYLLABUS_OPTIONS[0]!;
+  const currentPreset = findPreset(presetId);
 
   const loadPreset = (id: string) => {
     const p = findPreset(id);
@@ -113,6 +152,22 @@ export function MocklabWorkspace() {
     setSourceText(p.sourceQuestionText);
     setPaper(p.fallbackSetA);
     setTelemetry({ provider: "Verified Local Engine", latencyMs: null, isFallback: true });
+  };
+
+  const changeSyllabus = (code: string) => {
+    setSyllabus(code);
+    const matched = PRESETS.find((p) => p.syllabusCode === code);
+    if (matched) {
+      loadPreset(matched.id);
+    }
+  };
+
+  const changeBoard = (board: ExamBoard) => {
+    setExamBoard(board);
+    if (syllabusOption.examBoard !== board) {
+      const first = SYLLABUS_OPTIONS.find((s) => s.examBoard === board);
+      if (first) changeSyllabus(first.value);
+    }
   };
 
   const run = async (variantSet: VariantSet) => {
@@ -229,7 +284,7 @@ export function MocklabWorkspace() {
 
             <div className="space-y-2">
               <Label>Subject & paper</Label>
-              <Select value={syllabus} onValueChange={setSyllabus}>
+              <Select value={syllabus} onValueChange={changeSyllabus}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -260,19 +315,67 @@ export function MocklabWorkspace() {
             </div>
           </section>
 
-          <section className="space-y-2 rounded-lg border bg-card p-4">
-            <Label htmlFor="source">Source past paper question</Label>
-            <Textarea
-              id="source"
-              value={sourceText}
-              onChange={(e) => setSourceText(e.target.value)}
-              rows={9}
-              className="font-mono text-xs leading-relaxed"
-            />
-            <p className="text-xs text-muted-foreground">
-              Paste any past paper question or modify variables below. Use <code>$...$</code> for maths and{" "}
-              <code>[3]</code> for marks.
-            </p>
+          <section className="space-y-3 rounded-lg border bg-card p-4">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="source">Source past paper question</Label>
+              <div className="inline-flex rounded-md border bg-muted/60 p-0.5 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setSourcePreviewMode("edit")}
+                  className={cn(
+                    "flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium transition-colors",
+                    sourcePreviewMode === "edit"
+                      ? "bg-card text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <Code className="size-3" /> Edit LaTeX
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSourcePreviewMode("preview")}
+                  className={cn(
+                    "flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium transition-colors",
+                    sourcePreviewMode === "preview"
+                      ? "bg-card text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <Eye className="size-3" /> Preview Math
+                </button>
+              </div>
+            </div>
+
+            {sourcePreviewMode === "preview" ? (
+              <div
+                className="min-h-[170px] max-h-[280px] overflow-y-auto rounded-md border border-input bg-muted/20 p-3 font-serif text-xs leading-relaxed"
+                title="Click 'Edit LaTeX' to modify"
+              >
+                <MathRenderer text={sourceText} className="block" />
+              </div>
+            ) : (
+              <Textarea
+                id="source"
+                value={sourceText}
+                onChange={(e) => setSourceText(e.target.value)}
+                rows={9}
+                className="font-mono text-xs leading-relaxed"
+              />
+            )}
+
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs text-muted-foreground">
+              <span>
+                Use <code>$...$</code> for maths and <code>[3]</code> for marks.
+              </span>
+              <a
+                href={getPapaCambridgeUrl(syllabusOption.syllabusCode)}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+              >
+                PapaCambridge Archive <ExternalLink className="size-3" />
+              </a>
+            </div>
           </section>
 
           <section className="space-y-2">
@@ -337,6 +440,9 @@ export function MocklabWorkspace() {
           <div className="no-print flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-card p-2">
             <Tabs value={view} onValueChange={(v) => setView(v as View)}>
               <TabsList className="h-auto flex-wrap">
+                <TabsTrigger value="original" className="gap-1.5">
+                  <FileText className="size-4" /> Original Past Paper
+                </TabsTrigger>
                 <TabsTrigger value="paper" className="gap-1.5">
                   <FileText className="size-4" /> Student Question Paper
                 </TabsTrigger>
@@ -372,6 +478,76 @@ export function MocklabWorkspace() {
           </div>
 
           <div className={cn("print-full rounded-lg bg-muted/70 p-3 sm:p-6", generating && "opacity-60 transition-opacity")}>
+            {view === "original" && (
+              <article className="exam-sheet mx-auto w-full max-w-[210mm] px-8 py-10 sm:px-12 relative">
+                <header className="border-2 border-paper-rule">
+                  <div className="flex items-stretch justify-between gap-4 p-4">
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-paper-muted">
+                        {examBoard}
+                      </p>
+                      <p className="mt-1 font-mono text-2xl font-semibold text-paper-foreground">
+                        {syllabusOption.syllabusCode}
+                      </p>
+                      <p className="mt-1 font-serif text-base text-paper-foreground">
+                        {syllabusOption.paperTitle}
+                      </p>
+                      <p className="mt-0.5 text-xs text-paper-muted">
+                        Topic: {currentPreset?.topic ?? "Benchmark Source Question"}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 flex-col items-end justify-between gap-2 text-right">
+                      <span className="border-2 border-paper-rule px-3 py-1 font-mono text-xs font-bold tracking-widest text-primary bg-primary/5">
+                        ORIGINAL BENCHMARK
+                      </span>
+                      <div className="text-xs text-paper-muted">
+                        <p>Official Past Paper Source</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {showHeader && (
+                    <div className="grid grid-cols-1 gap-3 border-t-2 border-paper-rule px-4 py-3 text-sm sm:grid-cols-[2fr_1fr]">
+                      <div className="flex items-end gap-2">
+                        <span className="shrink-0 font-medium">Candidate Name:</span>
+                        <span className="mb-1 h-px flex-1 bg-paper-rule" />
+                      </div>
+                      <div className="flex items-end gap-2">
+                        <span className="shrink-0 font-medium">Centre/Roll No:</span>
+                        <span className="mb-1 h-px flex-1 bg-paper-rule" />
+                      </div>
+                    </div>
+                  )}
+                </header>
+
+                <p className="mt-4 text-xs italic text-paper-muted">
+                  Answer all parts. Show all necessary working. The number of marks is given in brackets [ ] at the end of each part.
+                </p>
+
+                <section className="mt-6 font-serif text-[15px] text-paper-foreground">
+                  <div className="flex gap-3">
+                    <span className="font-sans text-base font-bold">1.</span>
+                    <div className="block flex-1 leading-relaxed">
+                      <MathRenderer text={sourceText} className="block leading-relaxed" />
+                    </div>
+                  </div>
+
+                  {showLines && (
+                    <div className="mt-8 space-y-2 pl-7" aria-hidden>
+                      {Array.from({ length: 10 }).map((_, j) => (
+                        <div key={j} className="working-line" />
+                      ))}
+                    </div>
+                  )}
+                </section>
+
+                <footer className="mt-10 flex justify-between border-t border-paper-line pt-2 text-[10px] uppercase tracking-wider text-paper-muted">
+                  <span>{syllabusOption.syllabusCode} · Benchmark Past Paper</span>
+                  <span>Official Archive</span>
+                </footer>
+              </article>
+            )}
+
             {(view === "paper" || view === "pack") && (
               <ExamPaperPreview paper={paper} showWorkingLines={showLines} showCandidateHeader={showHeader} />
             )}

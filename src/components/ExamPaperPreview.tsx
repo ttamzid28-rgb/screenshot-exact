@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Edit3, Check } from "lucide-react";
 import { MathRenderer } from "@/components/MathRenderer";
 import type { GeneratedExamPaper } from "@/types/exam";
@@ -11,7 +11,14 @@ interface Props {
 
 export function ExamPaperPreview({ paper, showWorkingLines, showCandidateHeader }: Props) {
   const [editable, setEditable] = useState(false);
+  const [stem, setStem] = useState(paper.questionStem);
+  const [parts, setParts] = useState(paper.parts);
   const h = paper.paperHeader;
+
+  useEffect(() => {
+    setStem(paper.questionStem);
+    setParts(paper.parts);
+  }, [paper]);
 
   return (
     <article className="exam-sheet mx-auto w-full max-w-[210mm] px-8 py-10 sm:px-12 relative">
@@ -19,7 +26,7 @@ export function ExamPaperPreview({ paper, showWorkingLines, showCandidateHeader 
         <button
           type="button"
           onClick={() => setEditable((v) => !v)}
-          className="inline-flex items-center gap-1.5 rounded border border-paper-line bg-card px-2.5 py-1 text-xs font-medium text-paper-muted hover:text-paper-foreground transition-colors"
+          className="inline-flex items-center gap-1.5 rounded border border-paper-line bg-card px-2.5 py-1 text-xs font-medium text-paper-muted hover:text-paper-foreground transition-colors shadow-sm"
         >
           {editable ? <Check className="size-3 text-emerald-600" /> : <Edit3 className="size-3" />}
           {editable ? "Done Editing" : "Edit Text"}
@@ -29,16 +36,16 @@ export function ExamPaperPreview({ paper, showWorkingLines, showCandidateHeader 
       <header className="border-2 border-paper-rule">
         <div className="flex items-stretch justify-between gap-4 p-4">
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-paper-muted" contentEditable={editable}>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-paper-muted" contentEditable={editable} suppressContentEditableWarning>
               {h.examBoard}
             </p>
-            <p className="mt-1 font-mono text-2xl font-semibold text-paper-foreground" contentEditable={editable}>
+            <p className="mt-1 font-mono text-2xl font-semibold text-paper-foreground" contentEditable={editable} suppressContentEditableWarning>
               {h.syllabusCode}
             </p>
-            <p className="mt-1 font-serif text-base text-paper-foreground" contentEditable={editable}>
+            <p className="mt-1 font-serif text-base text-paper-foreground" contentEditable={editable} suppressContentEditableWarning>
               {h.paperTitle}
             </p>
-            <p className="mt-0.5 text-xs text-paper-muted" contentEditable={editable}>
+            <p className="mt-0.5 text-xs text-paper-muted" contentEditable={editable} suppressContentEditableWarning>
               Topic: {h.topic}
             </p>
           </div>
@@ -48,7 +55,7 @@ export function ExamPaperPreview({ paper, showWorkingLines, showCandidateHeader 
             </span>
             <div className="text-xs text-paper-muted">
               <p>
-                Time Allowed: <span className="font-semibold text-paper-foreground" contentEditable={editable}>{h.timeAllowed}</span>
+                Time Allowed: <span className="font-semibold text-paper-foreground" contentEditable={editable} suppressContentEditableWarning>{h.timeAllowed}</span>
               </p>
               <p>
                 Total Marks: <span className="font-semibold text-paper-foreground">[{h.totalMarks}]</span>
@@ -78,19 +85,43 @@ export function ExamPaperPreview({ paper, showWorkingLines, showCandidateHeader 
       <section className="mt-6 font-serif text-[15px] text-paper-foreground">
         <div className="flex gap-3">
           <span className="font-sans text-base font-bold">{paper.questionNumber}.</span>
-          <div contentEditable={editable} className="block flex-1 outline-none">
-            <MathRenderer text={paper.questionStem} className="block" />
-          </div>
+          {editable ? (
+            <textarea
+              value={stem}
+              onChange={(e) => setStem(e.target.value)}
+              rows={Math.max(2, stem.split("\n").length + 1)}
+              className="w-full rounded border border-paper-line bg-background/90 p-2 font-mono text-xs leading-relaxed focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          ) : (
+            <div className="block flex-1">
+              <MathRenderer text={stem} className="block" />
+            </div>
+          )}
         </div>
 
         <ol className="mt-5 space-y-6 pl-7">
-          {paper.parts.map((part, i) => (
+          {parts.map((part, i) => (
             <li key={`${part.partLabel}-${i}`} className="print-avoid-break">
               <div className="flex items-start gap-3">
                 <span className="w-14 shrink-0 font-semibold">{part.partLabel}</span>
-                <div contentEditable={editable} className="block flex-1 outline-none">
-                  <MathRenderer text={part.questionText} className="block" />
-                </div>
+                {editable ? (
+                  <textarea
+                    value={part.questionText}
+                    onChange={(e) => {
+                      const next = [...parts];
+                      if (next[i]) {
+                        next[i] = { ...next[i], questionText: e.target.value };
+                        setParts(next);
+                      }
+                    }}
+                    rows={Math.max(2, part.questionText.split("\n").length + 1)}
+                    className="w-full rounded border border-paper-line bg-background/90 p-2 font-mono text-xs leading-relaxed focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                ) : (
+                  <div className="block flex-1">
+                    <MathRenderer text={part.questionText} className="block" />
+                  </div>
+                )}
                 <span className="shrink-0 pl-2 font-sans font-bold">[{part.marks}]</span>
               </div>
 

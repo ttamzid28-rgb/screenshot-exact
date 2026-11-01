@@ -43,7 +43,7 @@ export function MarkSchemePreview({ paper }: { paper: GeneratedExamPaper }) {
         </div>
       </header>
 
-      <div className="mt-6 overflow-x-auto">
+      <div className="mt-6 overflow-x-auto print:overflow-visible">
         <table className="w-full border-collapse border border-paper-rule text-sm text-paper-foreground">
           <thead>
             <tr className="bg-muted text-left text-xs uppercase tracking-wider">
