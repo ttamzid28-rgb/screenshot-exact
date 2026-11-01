@@ -936,18 +936,18 @@ export const PRESETS: PastPaperPreset[] = [
         "timeAllowed": "10 minutes",
         "variantSet": "Set A"
       },
-      "questionNumber": 7,
-      "questionStem": "Consider the equation $2\\cos^2 \\theta + \\sin \\theta - 2 = 0$.",
+      "questionNumber": 3,
+      "questionStem": "Consider the equation $\\cos^2 \\theta = 1 - \\sin \\theta$ for $0^\\circ \\le \\theta < 360^\\circ$.",
       "parts": [
         {
           "partLabel": "(a)",
-          "questionText": "Show that this equation can be written as $\\sin \\theta(2\\sin \\theta - 1) = 0$.",
+          "questionText": "Show that the equation $\\cos^2 \\theta = 1 - \\sin \\theta$ can be written as $\\sin^2 \\theta - \\sin \\theta = 0$.",
           "marks": 2,
           "workingLines": 4
         },
         {
           "partLabel": "(b)",
-          "questionText": "Hence solve, for $0^\\circ \\le \\theta < 360^\\circ$, the equation $2\\cos^2 \\theta + \\sin \\theta - 2 = 0$.",
+          "questionText": "Hence solve, for $0^\\circ \\le \\theta < 360^\\circ$, the equation $\\cos^2 \\theta = 1 - \\sin \\theta$.",
           "marks": 4,
           "workingLines": 6
         }
@@ -955,20 +955,20 @@ export const PRESETS: PastPaperPreset[] = [
       "markScheme": [
         {
           "partLabel": "(a)",
-          "solutionSteps": "$2(1 - \\sin^2 \\theta) + \\sin \\theta - 2 = 0$\n$2 - 2\\sin^2 \\theta + \\sin \\theta - 2 = 0$\n$2\\sin^2 \\theta - \\sin \\theta = 0 \\Rightarrow \\sin \\theta(2\\sin \\theta - 1) = 0$",
+          "solutionSteps": "Using $\\cos^2\\theta = 1 - \\sin^2\\theta$, substitute into the given relation:\n\n$$1 - \\sin^2\\theta = 1 - \\sin\\theta$$\n\nCancel the 1 on both sides and multiply by $-1$ to obtain:\n$$\\sin^2\\theta - \\sin\\theta = 0$$\n\nThus the required form is obtained.",
           "markAllocation": "M1 A1",
           "totalPartMarks": 2,
-          "examinerGuidance": "M1 substitute $\\cos^2 \\theta = 1 - \\sin^2 \\theta$. A1 factorised form established."
+          "examinerGuidance": "M1 substitute identity $\\cos^2\\theta = 1 - \\sin^2\\theta$. A1 establish required quadratic equation without error."
         },
         {
           "partLabel": "(b)",
-          "solutionSteps": "$\\sin \\theta = 0 \\Rightarrow \\theta = 0^\\circ, 180^\\circ$\n$2\\sin \\theta - 1 = 0 \\Rightarrow \\sin \\theta = \\frac{1}{2} \\Rightarrow \\theta = 30^\\circ, 150^\\circ$\nSolutions: $\\theta = 0^\\circ, 30^\\circ, 150^\\circ, 180^\\circ$",
+          "solutionSteps": "Factor the quadratic obtained in part (a):\n$$\\sin^2\\theta - \\sin\\theta = \\sin\\theta(\\sin\\theta - 1) = 0$$\nHence either $\\sin\\theta = 0$ or $\\sin\\theta = 1$.\n\nFor $0^\\circ \\le \\theta < 360^\\circ$:\n• $\\sin\\theta = 0 \\Rightarrow \\theta = 0^\\circ, 180^\\circ$\n• $\\sin\\theta = 1 \\Rightarrow \\theta = 90^\\circ$\n\nTherefore the solutions are $\\theta = 0^\\circ, 90^\\circ, 180^\\circ$.",
           "markAllocation": "M1 A1 A1 A1",
           "totalPartMarks": 4,
-          "examinerGuidance": "M1 solve both branches. A1 0° and 180°. A1 30°. A1 150°."
+          "examinerGuidance": "M1 factorise into two branches. A1 identify 0° and 180°. A1 identify 90°. A1 all correct solutions."
         }
       ],
-      "verificationSummary": "Verified: sin θ = 0 gives 0°, 180° in [0, 360). sin θ = 1/2 gives 30°, 150°. All 4 values satisfy 2 cos²θ + sin θ - 2 = 0."
+      "verificationSummary": "Verified: sin(0°) = 0, sin(90°) = 1, sin(180°) = 0 satisfy cos²θ = 1 - sin θ. No extra roots in [0°, 360°)."
     },
     "fallbackSetB": {
       "paperHeader": {
@@ -980,8 +980,8 @@ export const PRESETS: PastPaperPreset[] = [
         "timeAllowed": "10 minutes",
         "variantSet": "Set B"
       },
-      "questionNumber": 7,
-      "questionStem": "Consider the equation $2\\sin^2 \\theta - 3\\cos \\theta = 0$.",
+      "questionNumber": 3,
+      "questionStem": "Consider the equation $2\\sin^2 \\theta - 3\\cos \\theta = 0$ for $0^\\circ \\le \\theta < 360^\\circ$.",
       "parts": [
         {
           "partLabel": "(a)",
@@ -999,14 +999,14 @@ export const PRESETS: PastPaperPreset[] = [
       "markScheme": [
         {
           "partLabel": "(a)",
-          "solutionSteps": "$2(1 - \\cos^2 \\theta) - 3\\cos \\theta = 0$\n$2 - 2\\cos^2 \\theta - 3\\cos \\theta = 0$\n$2\\cos^2 \\theta + 3\\cos \\theta - 2 = 0$",
+          "solutionSteps": "Using $\\sin^2\\theta = 1 - \\cos^2\\theta$, substitute into the equation:\n\n$$2(1 - \\cos^2\\theta) - 3\\cos\\theta = 0$$\n$$2 - 2\\cos^2\\theta - 3\\cos\\theta = 0$$\n\nMultiply by $-1$ to obtain the required form:\n$$2\\cos^2\\theta + 3\\cos\\theta - 2 = 0$$",
           "markAllocation": "M1 A1",
           "totalPartMarks": 2,
-          "examinerGuidance": "M1 substitute $\\sin^2 \\theta = 1 - \\cos^2 \\theta$. A1 quadratic equation established."
+          "examinerGuidance": "M1 substitute $\\sin^2\\theta = 1 - \\cos^2\\theta$. A1 quadratic equation established."
         },
         {
           "partLabel": "(b)",
-          "solutionSteps": "$(2\\cos \\theta - 1)(\\cos \\theta + 2) = 0$\n$\\cos \\theta = -2$ has no real solutions (since $|\\cos \\theta| \\le 1$)\n$\\cos \\theta = \\frac{1}{2} \\Rightarrow \\theta = 60^\\circ, 300^\\circ$",
+          "solutionSteps": "Factor the quadratic equation from part (a):\n$$(2\\cos\\theta - 1)(\\cos\\theta + 2) = 0$$\n\nHence either $2\\cos\\theta - 1 = 0$ or $\\cos\\theta + 2 = 0$.\n\nFor $\\cos\\theta = -2$, there are no real solutions since $|\\cos\\theta| \\le 1$.\nFor $\\cos\\theta = \\frac{1}{2}$ in $0^\\circ \\le \\theta < 360^\\circ$:\n• $\\theta = 60^\\circ$\n• $\\theta = 360^\\circ - 60^\\circ = 300^\\circ$\n\nTherefore the solutions are $\\theta = 60^\\circ, 300^\\circ$.",
           "markAllocation": "M1 A1 A1 B1",
           "totalPartMarks": 4,
           "examinerGuidance": "M1 factorise quadratic. A1 reject cos θ = -2. A1 60°. B1 300°."
