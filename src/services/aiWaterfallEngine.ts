@@ -115,7 +115,7 @@ Non-negotiable rules:
 1. BACKWARD ENGINEERING: choose clean integer or simple rational FINAL answers first, then work backward to compute the question's coefficients and given values so every root, discriminant, gradient, integral and physical quantity evaluates cleanly. Never produce answers that need a calculator approximation unless the original did.
 2. COMMAND WORDS: use exact Cambridge/Edexcel command words — "Show that", "Hence find", "State", "Express", "Calculate", "Find", "Verify", "Determine".
 3. MARK SCHEME: break every part into official M1 (Method), A1 (Accuracy, dependent on M), and B1 (Independent) marks. The number of marks in markAllocation MUST equal totalPartMarks and the part's marks. Add examiner guidance such as "Allow ECF", "CAO", "OE", "Accept equivalent forms", "Ignore sign error".
-4. Write all mathematics in LaTeX using $...$ (inline) or $$...$$ (block). Use \\n for new lines inside solutionSteps.
+4. LATEX SYNTAX: Wrap EVERY mathematical formula, equation, variable, number with units, and symbol in $...$ (inline) or $$...$$ (display), for example $x$, $\theta$, $\binom{n}{k}$, $729$. Format solutionSteps with standard readable sentences and normal line breaks. NEVER leave LaTeX commands (like \sum, \binom, \frac, or \theta) outside of $...$.
 5. OUTPUT: return ONLY one strictly valid JSON object, no markdown, matching this TypeScript interface exactly:
 {
   "paperHeader": { "examBoard": string, "syllabusCode": string, "paperTitle": string, "topic": string, "totalMarks": number, "timeAllowed": string, "variantSet": "Set A" | "Set B" },
@@ -153,12 +153,17 @@ function buildUserPrompt(o: GenerateOptions): string {
   ].join("\n");
 }
 
+function unescapeLiteralNewlines(text: string): string {
+  if (!text) return "";
+  return text.replace(/\\n(?!(?:eq|e|otin|u|abla|atural|eg|ewline|ormalsize|ocorr)\b)/g, "\n");
+}
+
 function normalizePaper(raw: unknown, o: GenerateOptions): GeneratedExamPaper {
   const r = (raw ?? {}) as Partial<GeneratedExamPaper>;
   const parts: ExamQuestionPart[] = Array.isArray(r.parts)
     ? r.parts.map((p, i) => ({
         partLabel: String(p?.partLabel ?? `(${String.fromCharCode(97 + i)})`),
-        questionText: String(p?.questionText ?? ""),
+        questionText: unescapeLiteralNewlines(String(p?.questionText ?? "")),
         marks: Number(p?.marks) || 1,
         workingLines: Math.min(14, Math.max(2, Number(p?.workingLines) || 4)),
       }))
@@ -167,10 +172,10 @@ function normalizePaper(raw: unknown, o: GenerateOptions): GeneratedExamPaper {
   const markScheme: MarkSchemeRow[] = Array.isArray(r.markScheme)
     ? r.markScheme.map((m) => ({
         partLabel: String(m?.partLabel ?? ""),
-        solutionSteps: String(m?.solutionSteps ?? ""),
+        solutionSteps: unescapeLiteralNewlines(String(m?.solutionSteps ?? "")),
         markAllocation: String(m?.markAllocation ?? ""),
         totalPartMarks: Number(m?.totalPartMarks) || 0,
-        examinerGuidance: String(m?.examinerGuidance ?? ""),
+        examinerGuidance: unescapeLiteralNewlines(String(m?.examinerGuidance ?? "")),
       }))
     : [];
 
@@ -192,10 +197,10 @@ function normalizePaper(raw: unknown, o: GenerateOptions): GeneratedExamPaper {
       variantSet: o.variantSet,
     },
     questionNumber: Number(r.questionNumber) || 1,
-    questionStem: String(r.questionStem ?? ""),
+    questionStem: unescapeLiteralNewlines(String(r.questionStem ?? "")),
     parts,
     markScheme,
-    verificationSummary: String(r.verificationSummary || "Model-verified by backward substitution."),
+    verificationSummary: unescapeLiteralNewlines(String(r.verificationSummary || "Model-verified by backward substitution.")),
   };
 }
 

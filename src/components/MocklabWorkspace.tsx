@@ -544,10 +544,10 @@ export function MocklabWorkspace() {
             )}
           >
             {unverified ? <ShieldCheck className="mt-0.5 size-4 shrink-0" /> : <CheckCircle2 className="mt-0.5 size-4 shrink-0" />}
-            <p>
+            <div className="flex-1 min-w-0">
               <span className="font-semibold">{unverified ? "Not verified · " : "Mathematically verified · "}</span>
-              {paper.verificationSummary}
-            </p>
+              <MathRenderer text={paper.verificationSummary} className="inline font-sans text-sm" />
+            </div>
           </div>
 
           <div className={cn("print-full rounded-lg bg-muted/70 p-3 sm:p-6", generating && "opacity-60 transition-opacity")}>

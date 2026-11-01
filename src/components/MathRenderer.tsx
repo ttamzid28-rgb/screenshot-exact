@@ -3,11 +3,47 @@ import katex from "katex";
 
 import { cn } from "@/lib/utils";
 
-type Segment =
+export type Segment =
   | { kind: "text"; value: string }
   | { kind: "math"; value: string; block: boolean };
 
-const MATH_PATTERN = /\$\$([\s\S]+?)\$\$|\$([^$\n]+?)\$/g;
+export const MATH_PATTERN = /\$\$([\s\S]+?)\$\$|\$([\s\S]+?)\$/g;
+
+const BARE_MATH_COMMANDS =
+  "sum|binom|frac|sqrt|int|prod|cdot|times|theta|pi|alpha|beta|gamma|Delta|delta|partial|infty|approx|pm|mp|le|ge|leq|geq|neq|ne|sin|cos|tan|cot|sec|csc|ln|log|exp|rightarrow|Rightarrow|to";
+const BARE_MATH_ARGS =
+  "(?:\\s*(?:\\{[^{}]*\\}|\\[[^\\]]*\\]|_\\{[^{}]*\\}|\\^\\{[^{}]*\\}|_[a-zA-Z0-9+]|\\^[a-zA-Z0-9+]))*";
+const BARE_MATH_REGEX = new RegExp(
+  `(?<!\\$)\\\\(?:${BARE_MATH_COMMANDS})(?![a-zA-Z])${BARE_MATH_ARGS}(?!\\$)`,
+  "g",
+);
+
+export function sanitizeTextContent(text: string): string {
+  if (!text) return "";
+  // Convert literal "\n" strings into real newline characters,
+  // protecting actual LaTeX commands that start with "\n" (\neq, \ne, \notin, \nu, \nabla, \natural, \neg, \newline, \normalsize, \nocorr).
+  let cleaned = text.replace(/\\n(?!(?:eq|e|otin|u|abla|atural|eg|ewline|ormalsize|ocorr)\b)/g, "\n");
+
+  // Convert standard LaTeX display \[ ... \] and inline \( ... \) delimiters to $$ and $:
+  cleaned = cleaned.replace(/\\\[([\s\S]+?)\\\]/g, (_, math) => `$$${math}$$`);
+  cleaned = cleaned.replace(/\\\(([\s\S]+?)\\\)/g, (_, math) => `$${math}$`);
+
+  // Auto-wrap bare LaTeX commands that appear outside $...$ (e.g. \binom{n}{k}, \sum_{k=0}^n, \frac{a}{b}, \theta, \cdot, \times, \pm)
+  let result = "";
+  let lastIndex = 0;
+  for (const match of cleaned.matchAll(MATH_PATTERN)) {
+    const idx = match.index ?? 0;
+    if (idx > lastIndex) {
+      result += cleaned.slice(lastIndex, idx).replace(BARE_MATH_REGEX, (m) => `$${m.trim()}$`);
+    }
+    result += match[0];
+    lastIndex = idx + match[0].length;
+  }
+  if (lastIndex < cleaned.length) {
+    result += cleaned.slice(lastIndex).replace(BARE_MATH_REGEX, (m) => `$${m.trim()}$`);
+  }
+  return result;
+}
 
 export function splitMath(text: string): Segment[] {
   const segments: Segment[] = [];
@@ -52,7 +88,8 @@ function TextWithBreaks({ value }: { value: string }) {
 }
 
 export function MathRenderer({ text, className }: { text: string; className?: string }) {
-  const segments = useMemo(() => splitMath(text ?? ""), [text]);
+  const cleaned = useMemo(() => sanitizeTextContent(text ?? ""), [text]);
+  const segments = useMemo(() => splitMath(cleaned), [cleaned]);
   return (
     <span className={cn("leading-relaxed", className)}>
       {segments.map((seg, i) =>
