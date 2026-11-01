@@ -865,7 +865,7 @@ export const PRESETS: PastPaperPreset[] = [
         },
         {
           "partLabel": "(b)",
-          "solutionSteps": "$(1 + 4x)(64 - 576x + 2160x^2 + \\dots)$\n$x^2\\text{ term} = 1(2160x^2) + 4x(-576x)$\n$= (2160 - 2304)x^2 = -144x^2$\nCoefficient $= -144$",
+          "solutionSteps": "Consider the product:\n$$(1 + 4x)(64 - 576x + 2160x^2 + \\dots)$$\n\nThe term in $x^2$ is:\n$$1(2160x^2) + 4x(-576x) = (2160 - 2304)x^2 = -144x^2$$\n\nTherefore the coefficient of $x^2$ is $-144$",
           "markAllocation": "M1 M1 A1",
           "totalPartMarks": 3,
           "examinerGuidance": "M1 identify both cross-terms. M1 arithmetic evaluation. A1 -144 CAO."
@@ -909,7 +909,7 @@ export const PRESETS: PastPaperPreset[] = [
         },
         {
           "partLabel": "(b)",
-          "solutionSteps": "$(2 + 5x)(243 - 810x + 1080x^2 + \\dots)$\n$x^2\\text{ term} = 2(1080x^2) + 5x(-810x)$\n$= (2160 - 4050)x^2 = -1890x^2$\nCoefficient $= -1890$",
+          "solutionSteps": "Consider the product:\n$$(2 + 5x)(243 - 810x + 1080x^2 + \\dots)$$\n\nThe term in $x^2$ is:\n$$2(1080x^2) + 5x(-810x) = (2160 - 4050)x^2 = -1890x^2$$\n\nTherefore the coefficient of $x^2$ is $-1890$",
           "markAllocation": "M1 M1 A1",
           "totalPartMarks": 3,
           "examinerGuidance": "M1 identify both cross-terms. M1 compute products. A1 -1890 CAO."

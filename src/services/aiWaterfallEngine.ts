@@ -1,5 +1,6 @@
 import { PRESETS } from "@/data/presets";
 import { parseModelJson } from "@/services/jsonSanitizer";
+import { sanitizeTextContent } from "@/components/MathRenderer";
 import type {
   ExamBoard,
   ExamQuestionPart,
@@ -115,9 +116,8 @@ Non-negotiable rules:
 1. BACKWARD ENGINEERING: choose clean integer or simple rational FINAL answers first, then work backward to compute the question's coefficients and given values so every root, discriminant, gradient, integral and physical quantity evaluates cleanly. Never produce answers that need a calculator approximation unless the original did.
 2. COMMAND WORDS: use exact Cambridge/Edexcel command words — "Show that", "Hence find", "State", "Express", "Calculate", "Find", "Verify", "Determine".
 3. MARK SCHEME: break every part into official M1 (Method), A1 (Accuracy, dependent on M), and B1 (Independent) marks. The number of marks in markAllocation MUST equal totalPartMarks and the part's marks. Add examiner guidance such as "Allow ECF", "CAO", "OE", "Accept equivalent forms", "Ignore sign error".
-4. LATEX SYNTAX: Wrap EVERY mathematical formula, equation, variable, number with units, and symbol in $...$ (inline) or $$...$$ (display), for example $x$, $\theta$, $\binom{n}{k}$, $729$. Format solutionSteps with standard readable sentences and normal line breaks. NEVER leave LaTeX commands (like \sum, \binom, \frac, or \theta) outside of $...$.
-5. CRITICAL: Never output LaTeX row-breaks (\\ or \newline) in plain text descriptions. Use normal paragraphs and newlines (\n). Every mathematical step must be wrapped in $...$ or $$...$$ from the very first coefficient or sign.
-6. OUTPUT: return ONLY one strictly valid JSON object, no markdown, matching this TypeScript interface exactly:
+4. LATEX SYNTAX LAWS: Wrap EVERY mathematical formula, equation, variable, and number with units in $...$ or $$...$$. NEVER enclose English sentences inside math delimiters. NEVER output LaTeX row-breaks (\\ or \newline) in plain text descriptions; use standard paragraphs and newlines (\n).
+5. OUTPUT: return ONLY one strictly valid JSON object, no markdown, matching this TypeScript interface exactly:
 {
   "paperHeader": { "examBoard": string, "syllabusCode": string, "paperTitle": string, "topic": string, "totalMarks": number, "timeAllowed": string, "variantSet": "Set A" | "Set B" },
   "questionNumber": number,
@@ -154,21 +154,14 @@ function buildUserPrompt(o: GenerateOptions): string {
   ].join("\n");
 }
 
-function sanitizeEngineText(text: string): string {
-  if (!text) return "";
-  let cleaned = text.replace(/\\n(?!(?:eq|e|otin|u|abla|atural|eg|ewline|ormalsize|ocorr)\b)/g, "\n");
-  cleaned = cleaned.replace(/^\s*\\+\s*$/gm, "");
-  cleaned = cleaned.replace(/\\+\s*(\n|$)/g, "\n");
-  cleaned = cleaned.replace(/\n{3,}/g, "\n\n");
-  return cleaned;
-}
+
 
 function normalizePaper(raw: unknown, o: GenerateOptions): GeneratedExamPaper {
   const r = (raw ?? {}) as Partial<GeneratedExamPaper>;
   const parts: ExamQuestionPart[] = Array.isArray(r.parts)
     ? r.parts.map((p, i) => ({
         partLabel: String(p?.partLabel ?? `(${String.fromCharCode(97 + i)})`),
-        questionText: sanitizeEngineText(String(p?.questionText ?? "")),
+        questionText: sanitizeTextContent(String(p?.questionText ?? "")),
         marks: Number(p?.marks) || 1,
         workingLines: Math.min(14, Math.max(2, Number(p?.workingLines) || 4)),
       }))
@@ -177,10 +170,10 @@ function normalizePaper(raw: unknown, o: GenerateOptions): GeneratedExamPaper {
   const markScheme: MarkSchemeRow[] = Array.isArray(r.markScheme)
     ? r.markScheme.map((m) => ({
         partLabel: String(m?.partLabel ?? ""),
-        solutionSteps: sanitizeEngineText(String(m?.solutionSteps ?? "")),
+        solutionSteps: sanitizeTextContent(String(m?.solutionSteps ?? "")),
         markAllocation: String(m?.markAllocation ?? ""),
         totalPartMarks: Number(m?.totalPartMarks) || 0,
-        examinerGuidance: sanitizeEngineText(String(m?.examinerGuidance ?? "")),
+        examinerGuidance: sanitizeTextContent(String(m?.examinerGuidance ?? "")),
       }))
     : [];
 
@@ -202,10 +195,10 @@ function normalizePaper(raw: unknown, o: GenerateOptions): GeneratedExamPaper {
       variantSet: o.variantSet,
     },
     questionNumber: Number(r.questionNumber) || 1,
-    questionStem: sanitizeEngineText(String(r.questionStem ?? "")),
+    questionStem: sanitizeTextContent(String(r.questionStem ?? "")),
     parts,
     markScheme,
-    verificationSummary: sanitizeEngineText(String(r.verificationSummary || "Model-verified by backward substitution.")),
+    verificationSummary: sanitizeTextContent(String(r.verificationSummary || "Model-verified by backward substitution.")),
   };
 }
 

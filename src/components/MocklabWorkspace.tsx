@@ -15,6 +15,7 @@ import {
   Printer,
   ShieldCheck,
   Sparkles,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -151,17 +152,53 @@ export function MocklabWorkspace() {
     const cloned: GeneratedExamPaper = JSON.parse(JSON.stringify(paper));
     setExamQueue((prev) => {
       const next = [...prev, cloned];
+      saveExamQueue(next);
       toast.success(`Added Question #${next.length} ([${cloned.paperHeader?.totalMarks || cloned.parts.reduce((s, p) => s + p.marks, 0)}] marks)`);
       return next;
     });
   };
 
-  const handleReorderQueue = (newQueue: GeneratedExamPaper[]) => setExamQueue(newQueue);
-  const handleRemoveFromQueue = (index: number) => {
-    setExamQueue((prev) => prev.filter((_, i) => i !== index));
-    toast.info("Removed question from assembly queue");
+  const handleRemoveQuestion = (index: number) => {
+    setExamQueue((prev) => {
+      const next = prev.filter((_, i) => i !== index);
+      saveExamQueue(next);
+      toast.info(`Discarded Question #${index + 1}. Remaining questions re-indexed.`);
+      if (next.length === 0) {
+        setView("paper");
+      }
+      return next;
+    });
   };
-  const handleClearQueue = () => setExamQueue([]);
+
+  const handleMoveQuestion = (index: number, direction: "up" | "down") => {
+    setExamQueue((prev) => {
+      const targetIndex = direction === "up" ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= prev.length) return prev;
+      const next = [...prev];
+      const item = next[index];
+      const target = next[targetIndex];
+      if (!item || !target) return prev;
+      next[index] = target;
+      next[targetIndex] = item;
+      saveExamQueue(next);
+      toast.success("Question reordered.");
+      return next;
+    });
+  };
+
+  const handleClearQueue = () => {
+    setExamQueue([]);
+    try {
+      window.localStorage.removeItem("mocklab_exam_queue");
+    } catch {}
+    setView("paper");
+    toast.info("Exam queue cleared — starting fresh.");
+  };
+
+  const handleReorderQueue = (newQueue: GeneratedExamPaper[]) => {
+    setExamQueue(newQueue);
+    saveExamQueue(newQueue);
+  };
   const handlePreviewQueuedQuestion = (q: GeneratedExamPaper) => {
     setPaper(q);
     setView("paper");
@@ -489,6 +526,16 @@ export function MocklabWorkspace() {
             >
               <Plus className="size-4 mr-1.5" /> Add Question to Exam Paper
             </Button>
+            {examQueue.length > 0 && (
+              <Button
+                variant="destructive"
+                size="sm"
+                className="w-full"
+                onClick={handleClearQueue}
+              >
+                <Trash2 className="size-4 mr-1.5" /> Clear Exam Queue ({examQueue.length} questions)
+              </Button>
+            )}
             <Button variant="outline" size="lg" className="w-full" disabled={!!generating} onClick={() => run("Set B")}>
               {generating === "Set B" ? (
                 <>
@@ -627,6 +674,9 @@ export function MocklabWorkspace() {
                   assembledExam={assembledExam}
                   showWorkingLines={showLines}
                   showCandidateHeader={showHeader}
+                  onRemoveQuestion={handleRemoveQuestion}
+                  onMoveQuestion={handleMoveQuestion}
+                  onClearQueue={handleClearQueue}
                 />
                 <div className="print-page-break" />
                 <MarkSchemePreview assembledExam={assembledExam} />
@@ -647,7 +697,7 @@ export function MocklabWorkspace() {
         onOpenChange={setDrawerOpen}
         queue={examQueue}
         onReorder={handleReorderQueue}
-        onRemove={handleRemoveFromQueue}
+        onRemove={handleRemoveQuestion}
         onClear={handleClearQueue}
         onPreviewQuestion={handlePreviewQueuedQuestion}
         onViewAssembled={handleViewAssembled}

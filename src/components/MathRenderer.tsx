@@ -18,6 +18,9 @@ const BARE_MATH_REGEX = new RegExp(
   "g",
 );
 
+const ENGLISH_SENTENCE_GUARD =
+  /\b(therefore|cancel|factor|solutions are|substitute|substituting|hence|using)\b/i;
+
 function isEquationLine(str: string): boolean {
   const trimmed = str.trim().replace(/[.,;:]$/, "").trim();
   if (/^\$\$[\s\S]+\$\$$/.test(trimmed) || /^\$[^\$]+\$$/.test(trimmed)) {
@@ -41,6 +44,17 @@ function isEquationLine(str: string): boolean {
   return hasMath;
 }
 
+function balanceDollars(text: string): string {
+  const matches = [...text.matchAll(/(?<!\\)\$/g)];
+  if (matches.length % 2 !== 0) {
+    const lastMatch = matches[matches.length - 1];
+    if (lastMatch && lastMatch.index !== undefined) {
+      return text.slice(0, lastMatch.index) + text.slice(lastMatch.index + 1);
+    }
+  }
+  return text;
+}
+
 export function sanitizeTextContent(text: string): string {
   if (!text) return "";
   // 1. Convert literal "\n" strings into real newline characters,
@@ -56,6 +70,9 @@ export function sanitizeTextContent(text: string): string {
   // Convert standard LaTeX display \[ ... \] and inline \( ... \) delimiters to $$ and $:
   cleaned = cleaned.replace(/\\\[([\s\S]+?)\\\]/g, (_, math) => `$$${math}$$`);
   cleaned = cleaned.replace(/\\\(([\s\S]+?)\\\)/g, (_, math) => `$${math}$`);
+
+  // Auto-balance dollar signs: strip trailing orphaned unescaped $ if odd count
+  cleaned = balanceDollars(cleaned);
 
   // Clean degree formatting: normalize unicode degree symbol
   cleaned = cleaned.replace(/(\d+(?:\.\d+)?)\s*°/g, "$1^\\circ");
@@ -106,7 +123,8 @@ export function sanitizeTextContent(text: string): string {
     nonMath = nonMath.replace(/(?<!\$)\b(\d+)\^\{?\\circ\}?(?!\$)/g, (_, d) => `$${d}^\\circ$`);
     result += nonMath.replace(BARE_MATH_REGEX, (m) => `$${m.trim()}$`);
   }
-  return result;
+
+  return balanceDollars(result);
 }
 
 export function splitMath(text: string): Segment[] {
@@ -115,8 +133,18 @@ export function splitMath(text: string): Segment[] {
   for (const match of text.matchAll(MATH_PATTERN)) {
     const index = match.index ?? 0;
     if (index > lastIndex) segments.push({ kind: "text", value: text.slice(lastIndex, index) });
-    if (match[1] !== undefined) segments.push({ kind: "math", value: match[1], block: true });
-    else segments.push({ kind: "math", value: match[2] ?? "", block: false });
+    if (match[1] !== undefined) {
+      segments.push({ kind: "math", value: match[1], block: true });
+    } else {
+      const inlineMath = match[2] ?? "";
+      // Anti-squishing guard: if inline math block accidentally captured a full English sentence,
+      // treat as plain text so KaTeX doesn't render it as squished multiplied variables.
+      if (ENGLISH_SENTENCE_GUARD.test(inlineMath) && /\s[a-zA-Z]{3,}\s/.test(inlineMath)) {
+        segments.push({ kind: "text", value: inlineMath });
+      } else {
+        segments.push({ kind: "math", value: inlineMath, block: false });
+      }
+    }
     lastIndex = index + match[0].length;
   }
   if (lastIndex < text.length) segments.push({ kind: "text", value: text.slice(lastIndex) });
