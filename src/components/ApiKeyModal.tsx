@@ -36,7 +36,9 @@ export function ApiKeyModal({ open, onOpenChange, onSaved }: Props) {
   useEffect(() => {
     if (!open) return;
     const next: Record<string, string> = {};
-    for (const p of PROVIDERS) next[p.storageKey] = window.localStorage.getItem(p.storageKey) ?? "";
+    for (const p of PROVIDERS) {
+      next[p.storageKey] = window.localStorage.getItem(p.storageKey) || p.envKey || "";
+    }
     setValues(next);
     setVisible({});
     setTestResults({});

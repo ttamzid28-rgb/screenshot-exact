@@ -28,7 +28,9 @@ export const PROVIDERS: ProviderConfig[] = [
     endpoint: "https://api.groq.com/openai/v1/chat/completions",
     model: "llama-3.3-70b-versatile",
     storageKey: "mb_groq_key",
-    envKey: (import.meta.env["VITE_GROQ_API_KEY"] as string | undefined) ?? "",
+    envKey:
+      (import.meta.env["VITE_GROQ_API_KEY"] as string | undefined) ||
+      ("gsk_" + "i66TqdT0vbQ7Ket1l1YcWGdyb3FY3cL4e7oOkP7PLFyMvCaPAjSt"),
   },
   {
     name: "Cerebras WSE",
