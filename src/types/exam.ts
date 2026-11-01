@@ -56,3 +56,14 @@ export interface GenerationResult {
   latencyMs: number;
   isFallback: boolean;
 }
+
+export interface AssembledExam {
+  title: string;
+  examBoard: ExamBoard;
+  syllabusCode: string;
+  paperTitle: string;
+  variantSet: VariantSet;
+  totalMarks: number;
+  timeAllowed: string;
+  questions: GeneratedExamPaper[];
+}

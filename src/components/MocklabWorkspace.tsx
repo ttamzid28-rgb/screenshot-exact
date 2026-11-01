@@ -10,6 +10,7 @@ import {
   GraduationCap,
   KeyRound,
   Layers,
+  Plus,
   Loader2,
   Printer,
   ShieldCheck,
@@ -20,6 +21,8 @@ import { toast } from "sonner";
 import { ApiKeyModal } from "@/components/ApiKeyModal";
 import { ExamPaperPreview } from "@/components/ExamPaperPreview";
 import { MarkSchemePreview } from "@/components/MarkSchemePreview";
+import { ExamAssemblyDrawer } from "@/components/ExamAssemblyDrawer";
+import { buildAssembledExam, loadExamQueue, saveExamQueue } from "@/services/examAssembly";
 import { MathRenderer } from "@/components/MathRenderer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -45,7 +48,7 @@ import type {
   VariationMode,
 } from "@/types/exam";
 
-type View = "original" | "paper" | "scheme" | "pack";
+type View = "original" | "paper" | "scheme" | "pack" | "assembled";
 
 interface Telemetry {
   provider: ProviderName;
@@ -133,6 +136,48 @@ export function MocklabWorkspace() {
   const [armed, setArmed] = useState(0);
 
   useEffect(() => setArmed(countArmedProviders()), []);
+
+  const [examQueue, setExamQueue] = useState<GeneratedExamPaper[]>(() => loadExamQueue());
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    saveExamQueue(examQueue);
+  }, [examQueue]);
+
+  const assembledExam = buildAssembledExam(examQueue);
+  const queueTotalMarks = assembledExam.totalMarks;
+
+  const addToExamQueue = () => {
+    const cloned: GeneratedExamPaper = JSON.parse(JSON.stringify(paper));
+    setExamQueue((prev) => {
+      const next = [...prev, cloned];
+      toast.success(`Added Question #${next.length} ([${cloned.paperHeader?.totalMarks || cloned.parts.reduce((s, p) => s + p.marks, 0)}] marks)`);
+      return next;
+    });
+  };
+
+  const handleReorderQueue = (newQueue: GeneratedExamPaper[]) => setExamQueue(newQueue);
+  const handleRemoveFromQueue = (index: number) => {
+    setExamQueue((prev) => prev.filter((_, i) => i !== index));
+    toast.info("Removed question from assembly queue");
+  };
+  const handleClearQueue = () => setExamQueue([]);
+  const handlePreviewQueuedQuestion = (q: GeneratedExamPaper) => {
+    setPaper(q);
+    setView("paper");
+    setDrawerOpen(false);
+    toast.info(`Viewing ${q.paperHeader.topic}`);
+  };
+  const handleViewAssembled = () => {
+    setView("assembled");
+    setDrawerOpen(false);
+  };
+  const handlePrintAssembledPack = () => {
+    setView("assembled");
+    setDrawerOpen(false);
+    window.setTimeout(() => window.print(), 150);
+  };
+
 
   useEffect(() => {
     try {
@@ -247,6 +292,10 @@ export function MocklabWorkspace() {
             >
               {generating && activeProvider ? `⏳ ${activeProvider}…` : telemetryLabel(telemetry)}
             </span>
+            <Button variant="nav" size="sm" onClick={() => setDrawerOpen(true)}>
+              <Layers className="size-4" />
+              Exam Paper ({examQueue.length} Qs · {queueTotalMarks} Marks)
+            </Button>
             <Button variant="nav" size="sm" onClick={() => setKeysOpen(true)}>
               <span className="relative">
                 <KeyRound />
@@ -432,6 +481,14 @@ export function MocklabWorkspace() {
                 </>
               )}
             </Button>
+            <Button
+              variant="secondary"
+              size="lg"
+              className="w-full"
+              onClick={addToExamQueue}
+            >
+              <Plus className="size-4 mr-1.5" /> Add Question to Exam Paper
+            </Button>
             <Button variant="outline" size="lg" className="w-full" disabled={!!generating} onClick={() => run("Set B")}>
               {generating === "Set B" ? (
                 <>
@@ -463,6 +520,11 @@ export function MocklabWorkspace() {
                 <TabsTrigger value="pack" className="gap-1.5">
                   <Layers className="size-4" /> Full Exam Pack
                 </TabsTrigger>
+                {examQueue.length > 0 && (
+                  <TabsTrigger value="assembled" className="gap-1.5">
+                    <Layers className="size-4" /> Assembled Exam ({examQueue.length})
+                  </TabsTrigger>
+                )}
               </TabsList>
             </Tabs>
             <div className="flex flex-wrap items-center gap-4 px-2 text-sm">
@@ -559,6 +621,18 @@ export function MocklabWorkspace() {
               </article>
             )}
 
+            {view === "assembled" && (
+              <div className="space-y-6">
+                <ExamPaperPreview
+                  assembledExam={assembledExam}
+                  showWorkingLines={showLines}
+                  showCandidateHeader={showHeader}
+                />
+                <div className="print-page-break" />
+                <MarkSchemePreview assembledExam={assembledExam} />
+              </div>
+            )}
+
             {(view === "paper" || view === "pack") && (
               <ExamPaperPreview paper={paper} showWorkingLines={showLines} showCandidateHeader={showHeader} />
             )}
@@ -567,6 +641,18 @@ export function MocklabWorkspace() {
           </div>
         </section>
       </main>
+
+      <ExamAssemblyDrawer
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+        queue={examQueue}
+        onReorder={handleReorderQueue}
+        onRemove={handleRemoveFromQueue}
+        onClear={handleClearQueue}
+        onPreviewQuestion={handlePreviewQueuedQuestion}
+        onViewAssembled={handleViewAssembled}
+        onPrintAssembledPack={handlePrintAssembledPack}
+      />
 
       <ApiKeyModal open={keysOpen} onOpenChange={setKeysOpen} onSaved={() => setArmed(countArmedProviders())} />
     </div>
