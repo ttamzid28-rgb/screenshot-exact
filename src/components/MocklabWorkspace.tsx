@@ -61,12 +61,18 @@ const MODES: { value: VariationMode; title: string; desc: string }[] = [
 
 const BOARDS: ExamBoard[] = ["CAIE (Cambridge)", "Pearson Edexcel"];
 
-function getPapaCambridgeUrl(code: string): string {
-  if (code.includes("9709")) return "https://pastpapers.papacambridge.com/papers/caie/as-and-a-level-mathematics-9709";
-  if (code.includes("4024")) return "https://pastpapers.papacambridge.com/papers/caie/o-level-mathematics-d-4024";
-  if (code.includes("5054")) return "https://pastpapers.papacambridge.com/papers/caie/o-level-physics-5054";
-  if (code.includes("9702")) return "https://pastpapers.papacambridge.com/papers/caie/as-and-a-level-physics-9702";
-  if (code.includes("WMA11")) return "https://pastpapers.papacambridge.com/papers/edexcel";
+export function getPastPaperArchiveUrl(syllabusCode: string, _examBoard?: string): string {
+  if (syllabusCode.includes("9709")) return "https://pastpapers.papacambridge.com/papers/caie/as-and-a-level-mathematics-9709";
+  if (syllabusCode.includes("4024")) return "https://pastpapers.papacambridge.com/papers/caie/o-level-mathematics-d-4024";
+  if (syllabusCode.includes("5054")) return "https://pastpapers.papacambridge.com/papers/caie/o-level-physics-5054";
+  if (syllabusCode.includes("9702")) return "https://pastpapers.papacambridge.com/papers/caie/as-and-a-level-physics-9702";
+  if (syllabusCode.includes("5070")) return "https://pastpapers.papacambridge.com/papers/caie/o-level-chemistry-5070";
+  if (syllabusCode.includes("9701")) return "https://pastpapers.papacambridge.com/papers/caie/as-and-a-level-chemistry-9701";
+  if (syllabusCode.includes("WMA11")) return "https://pastpapers.papacambridge.com/papers/edexcel/international-advanced-levels-mathematics-pure-mathematics-wma11";
+  if (syllabusCode.includes("WPH11") || syllabusCode.includes("WPH12")) return "https://pastpapers.papacambridge.com/papers/edexcel/international-advanced-levels-physics";
+  if (syllabusCode.includes("4PH1")) return "https://pastpapers.papacambridge.com/papers/edexcel/international-gcse-physics-4ph1";
+  if (syllabusCode.includes("WCH11") || syllabusCode.includes("WCH12")) return "https://pastpapers.papacambridge.com/papers/edexcel/international-advanced-levels-chemistry";
+  if (syllabusCode.includes("4CH1")) return "https://pastpapers.papacambridge.com/papers/edexcel/international-gcse-chemistry-4ch1";
   return "https://pastpapers.papacambridge.com";
 }
 
@@ -141,6 +147,7 @@ export function MocklabWorkspace() {
   }, [paper]);
 
   const syllabusOption = SYLLABUS_OPTIONS.find((s) => s.value === syllabus) ?? SYLLABUS_OPTIONS[0]!;
+  const availablePresets = PRESETS.filter((p) => p.syllabusCode === syllabusOption.syllabusCode);
   const currentPreset = findPreset(presetId);
 
   const loadPreset = (id: string) => {
@@ -156,6 +163,10 @@ export function MocklabWorkspace() {
 
   const changeSyllabus = (code: string) => {
     setSyllabus(code);
+    const targetOption = SYLLABUS_OPTIONS.find((s) => s.value === code);
+    if (targetOption && targetOption.examBoard !== examBoard) {
+      setExamBoard(targetOption.examBoard);
+    }
     const matched = PRESETS.find((p) => p.syllabusCode === code);
     if (matched) {
       loadPreset(matched.id);
@@ -305,7 +316,7 @@ export function MocklabWorkspace() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {PRESETS.map((p) => (
+                  {availablePresets.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
                       {p.label}
                     </SelectItem>
@@ -368,7 +379,7 @@ export function MocklabWorkspace() {
                 Use <code>$...$</code> for maths and <code>[3]</code> for marks.
               </span>
               <a
-                href={getPapaCambridgeUrl(syllabusOption.syllabusCode)}
+                href={getPastPaperArchiveUrl(syllabusOption.syllabusCode, syllabusOption.examBoard)}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
